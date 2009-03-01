@@ -17,7 +17,7 @@
  *  MA  02110-1301  USA.
  */
 
-
+#include "common.h"
 #include "c-icap.h"
 #include <errno.h>
 #include <netinet/tcp.h>
@@ -37,7 +37,7 @@ const char *ci_sockaddr_t_to_host(ci_sockaddr_t * addr, char *hname,
 }
 
 
-#ifdef HAVE_IPV6
+#ifdef USE_IPV6
 int icap_init_server_ipv6(int port, int *protocol_family, int secs_to_linger)
 {
      int fd;
@@ -77,7 +77,7 @@ int icap_init_server(int port, int *protocol_family, int secs_to_linger)
      int fd;
      struct sockaddr_in addr;
 
-#ifdef HAVE_IPV6
+#ifdef USE_IPV6
      if ((fd =
           icap_init_server_ipv6(port, protocol_family,
                                 secs_to_linger)) != CI_SOCKET_ERROR)
