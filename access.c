@@ -82,7 +82,11 @@ int check_request(ci_request_t * req)
 
 int access_check_request(ci_request_t * req)
 {
-     char *user;
+     int  res;
+
+     if (!used_access_controllers)
+          return CI_ACCESS_ALLOW;
+
      ci_debug_printf(9,"Going to check request for access control restrictions\n");
 
      res = check_request(req);
