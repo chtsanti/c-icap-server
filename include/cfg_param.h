@@ -51,6 +51,8 @@ struct ci_server_conf{
      struct ci_magics_db *MAGIC_DB;   
      char *SERVICES_DIR;
      char *MODULES_DIR;
+     char *SERVER_ADMIN;
+     char *SERVER_NAME;
 };
 
 /**
