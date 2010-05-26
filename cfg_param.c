@@ -419,6 +419,10 @@ int cfg_load_magicfile(char *directive, char **argv, void *setdata)
      }
 
      db_file = argv[0];
+     if (strcmp(CONF.magics_file, db_file) == 0) {
+         ci_debug_printf(2, "The db file %d is the same as default. Ignoring...\n", db_file); 
+         return 1;
+     }
      ci_debug_printf(2, "Going to load magic file %s\n", db_file);
      ndb = ci_magic_db_load(db_file);
      if (!ndb) {
@@ -829,6 +833,7 @@ int init_server(int port, int *family);
 void release_modules();
 void ci_dlib_closeall();
 int log_open();
+void ci_magic_db_free();
 
 void system_shutdown()
 {
@@ -843,6 +848,12 @@ void system_shutdown()
     release_services();
     release_modules();
     ci_dlib_closeall();
+
+    /*
+        Release other subsystems
+     */
+    ci_magic_db_free();
+    CONF.MAGIC_DB = NULL;
 }
 
 int system_reconfigure()
@@ -853,7 +864,12 @@ int system_reconfigure()
      reset_conf_tables();
      ci_acl_reset();
      reset_http_auth();
+
      ci_debug_printf(1, "All resources released. Going to reload!\n");
+     if (!(CONF.MAGIC_DB = ci_magic_db_load(CONF.magics_file))) {
+          ci_debug_printf(1, "Can not load magic file %s!!!\n",
+                          CONF.magics_file);
+     }
      init_modules();
      init_services();
 
