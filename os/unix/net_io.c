@@ -52,6 +52,7 @@ int icap_init_server_ipv6(int port, int *protocol_family, int secs_to_linger)
 
      icap_socket_opts(fd, secs_to_linger);
 
+     memset(&addr, 0, sizeof(addr));
      addr.sin6_family = AF_INET6;
      addr.sin6_port = htons(port);
      memcpy(&(addr.sin6_addr), &(in6addr_any), sizeof(struct in6_addr));
@@ -95,6 +96,7 @@ int icap_init_server(int port, int *protocol_family, int secs_to_linger)
 
      icap_socket_opts(fd, secs_to_linger);
 
+     memset(&addr, 0, sizeof(addr));
      addr.sin_family = AF_INET;
      addr.sin_port = htons(port);
      addr.sin_addr.s_addr = INADDR_ANY;
