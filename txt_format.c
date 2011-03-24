@@ -404,7 +404,7 @@ int fmt_seconds(ci_request_t *req, char *buf,int len, char *param)
 
 int fmt_httpclientip(ci_request_t *req, char *buf,int len, char *param)
 {
-    char *s;
+  const char *s;
   int i;
   if (!len)
      return 0;
@@ -423,7 +423,7 @@ int fmt_httpclientip(ci_request_t *req, char *buf,int len, char *param)
 
 int fmt_httpserverip(ci_request_t *req, char *buf,int len, char *param)
 {
-  char *s;
+  const char *s;
   int i;
   if (!len)
      return 0;
@@ -449,7 +449,7 @@ int fmt_http_req_url_o(ci_request_t *req, char *buf,int len, char *param)
 
 int fmt_http_req_head_o(ci_request_t *req, char *buf,int len, char *param)
 {
-  char *s = NULL;
+  const char *s = NULL;
   int i;
   if (!len)
      return 0;
@@ -472,7 +472,7 @@ int fmt_http_req_head_o(ci_request_t *req, char *buf,int len, char *param)
 
 int fmt_http_res_head_o(ci_request_t *req, char *buf,int len, char *param)
 {
-  char *s = NULL;
+  const char *s = NULL;
   int i;
   ci_headers_list_t *http_resp_headers;
 
@@ -500,7 +500,7 @@ int fmt_http_res_head_o(ci_request_t *req, char *buf,int len, char *param)
 
 int fmt_icap_req_head(ci_request_t *req, char *buf,int len, char *param)
 {
-  char *s = NULL;
+  const char *s = NULL;
   int i;
   if (!len)
      return 0;
@@ -524,7 +524,7 @@ int fmt_icap_req_head(ci_request_t *req, char *buf,int len, char *param)
 
 int fmt_icap_res_head(ci_request_t *req, char *buf,int len, char *param)
 {
-  char *s = NULL;
+  const char *s = NULL;
   int i;
   if (!len)
      return 0;
@@ -606,7 +606,7 @@ int fmt_req_preview_hex(ci_request_t *req, char *buf,int len, char *param)
 int fmt_logstr(ci_request_t *req, char *buf,int len, char *param)
 {
    int i;
-   char *s;
+   const char *s;
 
    if (!req->log_str)
        return 0;
