@@ -45,7 +45,7 @@ c_icap_DEPENDENCIES=libicapapi.la
 c_icap_CFLAGS= -Iinclude/ -DCONFDIR=\"$(CONFIGDIR)\" -DMODSDIR=\"$(MODULESDIR)\" \
                           -DSERVDIR=\"$(SERVICESDIR)\" -DLOGDIR=\"$(LOGDIR)\"
 
-c_icap_LDADD = @THREADS_LDADD@ libicapapi.la @DL_ADD_FLAG@
+c_icap_LDADD = libicapapi.la @DL_ADD_FLAG@ @THREADS_LDADD@
 c_icap_LDFLAGS = -rdynamic -rpath @libdir@ @THREADS_LDFLAGS@
 
 
