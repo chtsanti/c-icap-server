@@ -95,6 +95,10 @@ int main(int argc, char **argv)
      init_internal_lookup_tables();
      ci_acl_init();
      init_http_auth();
+     if (init_body_system() != CI_OK) {
+         ci_debug_printf(1, "Can not initialize body system\n");
+         exit(-1);
+     }
 
      if (!(CONF.MAGIC_DB = ci_magic_db_load(CONF.magics_file))) {
           ci_debug_printf(1, "Can not load magic file %s!!!\n",
