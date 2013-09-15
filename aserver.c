@@ -27,6 +27,7 @@
 #include "cfg_param.h"
 #include "filetype.h"
 #include "acl.h"
+#include "commands.h"
 
 /*
 extern char *PIDFILE;
@@ -99,6 +100,7 @@ int main(int argc, char **argv)
          ci_debug_printf(1, "Can not initialize body system\n");
          exit(-1);
      }
+     commands_init();
 
      if (!(CONF.MAGIC_DB = ci_magic_db_load(CONF.magics_file))) {
           ci_debug_printf(1, "Can not load magic file %s!!!\n",
