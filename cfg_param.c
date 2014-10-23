@@ -80,6 +80,8 @@ int MAX_REQUESTS_PER_CHILD = 0;
 int DAEMON_MODE = 1;
 int DebugLevelSetFromCmd = 0;
 const char *DEFAULT_SERVICE = NULL; /*Default service if not defined in ICAP URI*/
+int PIPELINING = 1;
+int CHECK_FOR_BUGGY_CLIENT = 0;
 
 extern char *SERVER_LOG_FILE;
 extern char *ACCESS_LOG_FILE;
@@ -175,6 +177,8 @@ static struct ci_conf_entry conf_variables[] = {
      {"InterProcessSharedMemScheme", NULL, cfg_shared_mem_scheme, NULL},
      {"InterProcessLockingScheme", NULL, cfg_proc_lock_scheme, NULL},
      {"DefaultService", &DEFAULT_SERVICE, intl_cfg_set_str, NULL},
+     {"Pipelining", &PIPELINING, intl_cfg_onoff, NULL},
+     {"SupportBuggyClients", &CHECK_FOR_BUGGY_CLIENT, intl_cfg_onoff, NULL},
      {NULL, NULL, NULL, NULL}
 };
 
