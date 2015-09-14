@@ -74,6 +74,7 @@ void compute_my_hostname()
 #if ! defined(_WIN32)
 void run_as_daemon()
 {
+     int fd;
      int pid;
      if ((pid = fork()) < 0) {
           ci_debug_printf(1, "Can not fork. exiting...");
@@ -81,6 +82,29 @@ void run_as_daemon()
      }
      if (pid)
           exit(0);
+
+     /* Direct standard file descriptors to "/dev/null"*/
+     fd = open("/dev/null", O_RDWR);
+     if (fd < 0) {
+          ci_debug_printf(1, "Unable to open '/dev/null'. exiting...");
+          exit(-1);
+     }
+
+     if (dup2(fd, STDIN_FILENO) < 0) {
+          ci_debug_printf(1, "Unable to set stdin to '/dev/null'. exiting...");
+          exit(-1);
+     }
+
+     if (dup2(fd, STDOUT_FILENO) < 0) {
+          ci_debug_printf(1, "Unable to set stdout to '/dev/null'. exiting...");
+          exit(-1);
+     }
+
+     if (dup2(fd, STDERR_FILENO) < 0) {
+          ci_debug_printf(1, "Unable to set stderr to '/dev/null'. exiting...");
+          exit(-1);
+     }
+     close(fd);
 }
 #endif
 
