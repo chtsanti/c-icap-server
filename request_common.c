@@ -275,6 +275,8 @@ ci_request_t *ci_request_alloc(ci_connection_t * connection)
      req->data_locked = 1;
      req->i206_use_original_body = -1;
 
+     req->echo_body = NULL;
+
      req->preview_data_type = -1;
      req->auth_required = 0;
 
@@ -342,6 +344,11 @@ void ci_request_reset(ci_request_t * req)
      req->data_locked = 1;
      req->i206_use_original_body = -1;
 
+     if (req->echo_body) {
+         ci_ring_buf_destroy(req->echo_body);
+         req->echo_body = NULL;
+     }
+
      req->preview_data_type = -1;
      req->auth_required = 0;
 
@@ -391,6 +398,11 @@ void ci_request_destroy(ci_request_t * req)
      for (i = 0; i < 7; i++) {
           if (req->trash_entities[i])
                destroy_encaps_entity(req->trash_entities[i]);
+     }
+
+     if (req->echo_body) {
+         ci_ring_buf_destroy(req->echo_body);
+         req->echo_body = NULL;
      }
 
      if (req->log_str)
