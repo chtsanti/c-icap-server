@@ -186,7 +186,7 @@ int ci_host_to_sockaddr_t(const char *servername, ci_sockaddr_t * addr, int prot
      return 1;
 }
 
-ci_connection_t *ci_connect_to(char *servername, int port, int proto, int timeout)
+ci_connection_t *ci_connect_to(const char *servername, int port, int proto, int timeout)
 {
      ci_connection_t *connection = malloc(sizeof(ci_connection_t));
      unsigned int addrlen = 0;
