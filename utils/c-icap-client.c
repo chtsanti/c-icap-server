@@ -193,8 +193,11 @@ int verbose = 0;
 ci_headers_list_t *xheaders = NULL;
 ci_headers_list_t *http_xheaders = NULL;
 ci_headers_list_t *http_resp_xheaders = NULL;
+int VERSION_MODE = 0;
 
 static struct ci_options_entry options[] = {
+     {"-V", NULL, &VERSION_MODE, ci_cfg_version, "Print version and exits"},
+     {"-VV", NULL, &VERSION_MODE, ci_cfg_build_info, "Print version and build informations and exits"},
      {"-i", "icap_servername", &icap_server, ci_cfg_set_str,
       "The icap server name"},
      {"-p", "port", &port, ci_cfg_set_int, "The server port"},
@@ -251,6 +254,8 @@ int main(int argc, char **argv)
           ci_args_usage(argv[0], options);
           exit(-1);
      }
+     if (VERSION_MODE)
+         exit(0);
 
 #if ! defined(_WIN32)
      __log_error = (void (*)(void *, const char *,...)) log_errors;     /*set c-icap library log  function */
