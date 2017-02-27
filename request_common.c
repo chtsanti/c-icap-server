@@ -26,6 +26,8 @@
 #include "debug.h"
 #include "request.h"
 #include "simple_api.h"
+#include "body.h"
+
 
 static void * _os_malloc(int size)
 {
