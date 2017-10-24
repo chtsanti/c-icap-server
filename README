@@ -29,8 +29,6 @@ Currently the following commands are implemented:
   "reconfigure": The service will reread the config file without the need 
 	         for stop and restart the c-icap server. Te services will
 		 be reinitialized
-  "srv_clamav:dbreload"
-	       : It reloads the clamav virus database
 
 Examples:
  - To reconfigure c-icap:
