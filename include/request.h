@@ -18,8 +18,8 @@
  */
 
 
-#ifndef _REQUEST_H
-#define _REQUEST_H
+#ifndef __C_ICAP_REQUEST_H
+#define __C_ICAP_REQUEST_H
 
 #include "header.h"
 #include "service.h"
