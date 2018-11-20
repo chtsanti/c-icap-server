@@ -62,13 +62,22 @@ void log_errors(void *unused, const char *format, ...)
     va_end(ap);
 }
 
+void vlog_errors(void *unused, const char *format, va_list ap)
+{
+    vfprintf(stderr, format, ap);
+}
+
 int main(int argc, char *argv[])
 {
     int i;
     ci_thread_t *threads;
     CI_DEBUG_STDOUT = 1;
 
+#if ! defined(_WIN32)
     __log_error = (void (*)(void *, const char *,...)) log_errors;     /*set c-icap library log  function */
+#else
+    __vlog_error = (void (*)(void *, const char *, va_list)) vlog_errors; /* set c-icap library  log function for win32..... */
+#endif
 
     ci_cfg_lib_init();
     ci_mem_init();

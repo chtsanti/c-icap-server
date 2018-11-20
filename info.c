@@ -44,7 +44,7 @@ void info_release_request_data(void *data);
 int info_io(char *wbuf, int *wlen, char *rbuf, int *rlen, int iseof,
             ci_request_t * req);
 
-CI_DECLARE_MOD_DATA ci_service_module_t info_service = {
+ci_service_module_t info_service = {
     "info",                         /* mod_name, The module name */
     "C-icap run-time information",            /* mod_short_descr,  Module short description */
     ICAP_REQMOD,                    /* mod_type, The service type is request modification */

@@ -28,7 +28,7 @@
 #include "ci_threads.h"
 #include "proc_threads_queues.h"
 #include "cfg_param.h"
-#include <windows.h>
+#include "port.h"
 #include <tchar.h>
 
 
@@ -52,6 +52,8 @@ ci_thread_mutex_t counters_mtx;
 struct childs_queue *childs_queue = NULL;
 child_shared_data_t *child_data;
 struct connections_queue *con_queue;
+process_pid_t MY_PROC_PID = 0;
+int CHILD_HALT = 0;
 
 /*Interprocess accepting mutex ....*/
 ci_proc_mutex_t accept_mutex;
@@ -107,11 +109,10 @@ static void cancel_all_threads()
 
 server_decl_t *newthread(struct connections_queue *con_queue)
 {
-    int i = 0;
     server_decl_t *serv;
     serv = (server_decl_t *) malloc(sizeof(server_decl_t));
     serv->srv_id = 0;
-//    serv->srv_pthread = pthread_self();
+    // serv->srv_pthread = ci_thread_self();
     serv->con_queue = con_queue;
     serv->served_requests = 0;
     serv->served_requests_no_reallocation = 0;
@@ -133,7 +134,7 @@ int thread_main(server_decl_t * srv)
 //     thread_signals();
 //*************************
     //    srv->srv_id = getpid(); //Setting my pid ...
-    //    srv->srv_pthread = pthread_self();
+    srv->srv_pthread = ci_thread_self();
     for (;;) {
         if (child_data->to_be_killed) {
             ci_debug_printf(1, "Thread exiting.....\n");
@@ -151,7 +152,7 @@ int thread_main(server_decl_t * srv)
             break;
         }
 
-        ci_netio_init(con.conn.fd);
+        ci_connection_set_nonblock(&con);
 
         ret = 1;
         if (srv->current_req == NULL)
@@ -236,8 +237,8 @@ int worker_main(ci_socket sockfd)
 //     char clientname[300];
     int haschild = 1, jobs_in_queue = 0;
     int32_t child_usedservers;
-    int pid = 0, error;
-
+    int64_t pid = 0;
+    int error;
 
     for (;;) {                 //Global for
         if (!ci_proc_mutex_lock(&accept_mutex)) {
@@ -246,7 +247,7 @@ int worker_main(ci_socket sockfd)
             continue;
         }
         child_data->idle = 0;
-        pid = (int) child_data->pid;
+        pid = (int64_t) child_data->pid;
         ci_debug_printf(1, "Child %d getting requests now ...\n", pid);
 
         do {                  //Getting requests while we have free servers.....
@@ -307,15 +308,13 @@ int worker_main(ci_socket sockfd)
 
 void child_main(ci_socket sockfd)
 {
-    int claddrlen = sizeof(ci_sockaddr_t);
     ci_thread_t thread;
-    int i, retcode, haschild = 1, jobs_in_queue = 0;
-    int pid = 0;
+    int i, retcode;
     char op;
     HANDLE hStdin;
     DWORD dwRead;
     //   child_signals();
-    //    pid = getpid();
+    MY_PROC_PID = GetCurrentProcessId();
 
     hStdin = GetStdHandle(STD_INPUT_HANDLE);
     if ((hStdin == INVALID_HANDLE_VALUE))
@@ -667,7 +666,7 @@ int wait_achild_to_die()
                         died_child);
         ach = get_child_data(childs_queue, died_child);
         CloseHandle(ach->pipe);
-        remove_child(childs_queue, died_child);
+        remove_child(&childs_queue, died_child, 0);
         CloseHandle(died_child);
         ci_thread_mutex_unlock(&control_process_mtx);
     }
@@ -710,17 +709,20 @@ int check_for_died_child(DWORD msecs)
                     died_child);
     ach = get_child_data(childs_queue, died_child);
     CloseHandle(ach->pipe);
-    remove_child(childs_queue, died_child);
+    remove_child(&childs_queue, died_child, 0);
     CloseHandle(died_child);
     return 1;
 }
 
-int init_server(int port, int *family)
+int init_server()
 {
-    LISTEN_SOCKET = icap_init_server(port, family, MAX_SECS_TO_LINGER);
+    ci_port_t *p;
+    p = (ci_port_t *)ci_vector_get(CI_CONF.PORTS, 0);
+    if (CI_SOCKET_INVALID == icap_init_server(p))
+        return 0;
 
-
-    if (LISTEN_SOCKET == CI_SOCKET_ERROR)
+    LISTEN_SOCKET = p->fd;
+    if (LISTEN_SOCKET == CI_SOCKET_INVALID)
         return 0;
     return 1;
 }
@@ -791,7 +793,7 @@ int start_server()
 #else
     child_data = (child_shared_data_t *) malloc(sizeof(child_shared_data_t));
     child_data->pid = 0;
-    child_data->freeservers = CI_CONF.THREADS_PER_CHILD;
+    child_data->servers = CI_CONF.THREADS_PER_CHILD;
     child_data->usedservers = 0;
     child_data->requests = 0;
     child_data->to_be_killed = 0;

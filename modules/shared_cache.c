@@ -7,6 +7,7 @@
 #include "proc_mutex.h"
 #include "shared_mem.h"
 #include <assert.h>
+#include <time.h>
 
 static int init_shared_cache(struct ci_server_conf *server_conf);
 static void release_shared_cache();
@@ -184,7 +185,16 @@ int ci_shared_cache_init(struct ci_cache *cache, const char *name)
     data->stat_updates = ci_stat_entry_register(buf, CI_STAT_INT64_T, "shared_cache");
 
     cache->cache_data = data;
+#if _WIN32
+    void (*local_command_register_action)(const char *name, int type, void *data,
+                                          void (*command_action) (const char *name, int type, void *data));
+    local_command_register_action = (void (*)(const char *, int, void *,
+                                              void (*) (const char *, int, void *))) GetProcAddress(GetModuleHandle(NULL), "ci_command_register_action");
+    if (local_command_register_action)
+        local_command_register_action("shared_cache_attach_cmd", CHILD_START_CMD, data, command_attach_shared_mem);
+#else
     ci_command_register_action("shared_cache_attach_cmd", CHILD_START_CMD, data, command_attach_shared_mem);
+#endif
     return 1;
 }
 

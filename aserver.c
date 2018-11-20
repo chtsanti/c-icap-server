@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 #if ! defined(_WIN32)
     __log_error = (void (*)(void *, const char *,...)) log_server;     /*set c-icap library log  function */
 #else
-    __vlog_error = vlog_server;        /*set c-icap library  log function */
+    __vlog_error = (void (*)(void *, const char *, va_list)) vlog_server; /* set c-icap library  log function */
 #endif
 
     assert(strcmp(ci_lib_version_string(), VERSION) == 0);

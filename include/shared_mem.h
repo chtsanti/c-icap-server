@@ -50,11 +50,11 @@ struct ci_shared_mem_id {
     void *mem;
     size_t size;
 
+    const ci_shared_mem_scheme_t *scheme;
 #if defined (_WIN32)
     HANDLE id;
 #else
 
-    const ci_shared_mem_scheme_t *scheme;
     union {
 #if defined (USE_POSIX_SHARED_MEM)
         struct {

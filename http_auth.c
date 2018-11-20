@@ -332,12 +332,20 @@ ci_acl_type_t acl_group = {
 
 void *get_auth(ci_request_t *req, char *param);
 void free_auth(ci_request_t *req,void *data);
+#if _WIN32
+/* Workaround for "error: initializer element is not constant" compiler error*/
+static ci_type_ops_t acl_auth_ops;
+#endif
 
 ci_acl_type_t acl_auth = {
     "auth",
     get_auth,
     free_auth,
-    &ci_str_ext_ops
+#ifdef _WIN32
+    &acl_auth_ops
+#else
+    &ci_str_ext_ops;
+#endif
 };
 
 
@@ -360,6 +368,9 @@ void free_auth(ci_request_t *req, void *data)
 
 void init_http_auth()
 {
+#ifdef _WIN32
+    memcpy(&acl_auth_ops, &ci_str_ext_ops, sizeof(ci_type_ops_t));
+#endif
     ci_acl_type_add(&acl_auth);
     ci_acl_type_add(&acl_group);
 }
@@ -372,6 +383,9 @@ void release_http_auth()
 void reset_http_auth()
 {
     group_source_release();
+#ifdef _WIN32
+    memcpy(&acl_auth_ops, &ci_str_ext_ops, sizeof(ci_type_ops_t));
+#endif
     ci_acl_type_add(&acl_auth);
     ci_acl_type_add(&acl_group);
 }

@@ -17,7 +17,6 @@
  *  MA  02110-1301  USA.
  */
 
-#include <assert.h>
 #include "common.h"
 #include "c-icap.h"
 #include "net_io.h"
@@ -26,6 +25,8 @@
 #include "commands.h"
 #include "cfg_param.h"
 #include "registry.h"
+#include <assert.h>
+#include <time.h>
 
 struct schedule_data {
     char name[CMD_NM_SIZE];

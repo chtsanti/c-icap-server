@@ -47,15 +47,8 @@ typedef struct ci_proc_mutex_scheme {
 struct ci_proc_mutex {
     char name[CI_PROC_MUTEX_NAME_SIZE];
 
-#if defined(_WIN32)
-
-    HANDLE id;
-
-#else
-
     const ci_proc_mutex_scheme_t *scheme;
     void *data;
-#endif
 };
 
 CI_DECLARE_FUNC(int) ci_proc_mutex_init(ci_proc_mutex_t *mutex, const char *name);

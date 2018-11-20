@@ -38,8 +38,12 @@
 #define STARTLEN 8192           /*8*1024*1024 */
 #define INCSTEP  4096
 
+#ifndef min
 #define min(x,y) ((x)>(y)?(y):(x))
+#endif
+#ifndef max
 #define max(x,y) ((x)>(y)?(x):(y))
+#endif
 
 static int MEMBUF_POOL = -1;
 static int CACHED_FILE_POOL = -1;

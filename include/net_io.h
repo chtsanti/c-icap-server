@@ -32,7 +32,8 @@
 #include <netdb.h>
 #include <fcntl.h>
 #else
-#include <WinSock2.h>
+//#include <WinSock2.h>
+#include <winsock2.h>
 #endif
 
 #ifdef __cplusplus

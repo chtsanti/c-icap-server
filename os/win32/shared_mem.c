@@ -105,3 +105,26 @@ int ci_shared_mem_destroy(ci_shared_mem_id_t * id)
     UnmapViewOfFile(id->mem);
     return 1;
 }
+
+int ci_shared_mem_print_info(ci_shared_mem_id_t *id, char *buf, size_t buf_size)
+{
+    return snprintf(buf, buf_size, " - ");
+}
+
+static const ci_shared_mem_scheme_t win32_shared_mem_scheme = {
+    ci_shared_mem_create,
+    ci_shared_mem_attach,
+    ci_shared_mem_detach,
+    ci_shared_mem_destroy,
+    ci_shared_mem_print_info,
+    "win32"
+};
+
+const ci_shared_mem_scheme_t *default_scheme = &win32_shared_mem_scheme;
+
+int ci_shared_mem_set_scheme(const char *name)
+{
+    if (strcasecmp(name, "win32") != 0)
+        return 0;
+    return 1;
+}

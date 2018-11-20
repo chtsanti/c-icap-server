@@ -17,13 +17,13 @@
  *  MA  02110-1301  USA.
  */
 
+#include "common.h"
 #include "c-icap.h"
-#include <Windows.h>
-#include <Winbase.h>
 #include <time.h>
 #include <assert.h>
 #include <io.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include "util.h"
 
 
@@ -104,7 +104,7 @@ void ci_to_strntime(char *buf, size_t size, const time_t *tm)
     ft.dwLowDateTime = (DWORD) ll;
     ft.dwHighDateTime = ll >>32;
     SYSTEMTIME stm;
-    FileTimeToSystemTime(&fd, &stm);
+    FileTimeToSystemTime(&ft, &stm);
     snprintf(buf, size, "%s %s %d %d:%d:%d %d", days[stm.wDayOfWeek],
              months[stm.wMonth], stm.wDay, stm.wHour, stm.wMinute, stm.wSecond,
              stm.wYear);
@@ -129,7 +129,7 @@ void ci_to_strntime_rfc822(char *buf, size_t size, const time_t *tm)
     ft.dwLowDateTime = (DWORD) ll;
     ft.dwHighDateTime = ll >>32;
     SYSTEMTIME stm;
-    FileTimeToSystemTime(&fd, &stm);
+    FileTimeToSystemTime(&ft, &stm);
     snprintf(buf, size, "%s, %0.2d %s %d %0.2d:%0.2d:%0.2d GMT",
              days[stm.wDayOfWeek], stm.wDay, months[stm.wMonth], stm.wYear,
              stm.wHour, stm.wMinute, stm.wSecond);
@@ -139,7 +139,7 @@ int ci_mktemp_file(char *dir, char *template, char *filename)
 {
     int fd;
     GetTempFileName(dir, template, 1, filename);
-    fd = open(filename, O_RDWR | O_CREAT | O_BINARY, S_IREAD | S_IWRITE);
+    fd = open(filename, O_RDWR | O_CREAT | O_BINARY, _S_IREAD | _S_IWRITE);
     return fd;
 }
 

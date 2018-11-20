@@ -37,6 +37,7 @@ struct ci_lookup_table *table = NULL;
 int queries_num;
 ci_thread_mutex_t mtx;
 
+#if ! defined(_WIN32)
 void log_errors(void *unused, const char *format, ...)
 {
     va_list ap;
@@ -44,6 +45,12 @@ void log_errors(void *unused, const char *format, ...)
     vfprintf(stderr, format, ap);
     va_end(ap);
 }
+#else
+void vlog_errors(void *unused, const char *format, va_list ap)
+{
+    vfprintf(stderr, format, ap);
+}
+#endif
 
 common_module_t * ci_common_module_build(const char *name, int (*init_module)(struct ci_server_conf *server_conf), int (*post_init_module)(struct ci_server_conf *server_conf), void (*close_module)(), struct ci_conf_entry *conf_table)
 {
@@ -55,7 +62,6 @@ common_module_t * ci_common_module_build(const char *name, int (*init_module)(st
     mod->conf_table = conf_table;
     return mod;
 }
-
 
 int load_module(const char *directive,const char **argv,void *setdata)
 {
@@ -242,7 +248,11 @@ int main(int argc,char *argv[])
     ci_mem_init();
     init_internal_lookup_tables();
 
+#if ! defined(_WIN32)
     __log_error = (void (*)(void *, const char *,...)) log_errors;     /*set c-icap library log  function */
+#else
+    __vlog_error = (void (*)(void *, const char *, va_list)) vlog_errors; /* set c-icap library  log function for win32..... */
+#endif
 
     if (!keys.indx) {
         keys.indx = calloc(MAX_LIST_SIZE, sizeof(char *));

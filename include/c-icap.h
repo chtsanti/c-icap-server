@@ -56,6 +56,10 @@
 
 
 #ifdef _WIN32
+
+#define CI_DECL_PROCESS_FUNC(type) type
+#define CI_DECL_PROCESS_DATA
+
 # if defined(CI_BUILD_LIB)
 
 #   define CI_DECLARE_FUNC(type) __declspec(dllexport) type
@@ -82,10 +86,14 @@
 #define CI_DECLARE_FUNC(type) __attribute__ ((visibility ("default"))) type
 #define CI_DECLARE_DATA __attribute__ ((visibility ("default")))
 #define CI_DECLARE_MOD_DATA __attribute__ ((visibility ("default")))
+#define CI_DECL_PROCESS_FUNC(type) __attribute__ ((visibility ("default"))) type
+#define CI_DECL_PROCESS_DATA __attribute__ ((visibility ("default")))
 #else
 #define CI_DECLARE_FUNC(type) type
 #define CI_DECLARE_DATA
 #define CI_DECLARE_MOD_DATA
+#define CI_DECL_PROCESS_FUNC(type) type
+#define CI_DECL_PROCESS_DATA
 #endif
 #endif
 

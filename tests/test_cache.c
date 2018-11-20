@@ -79,6 +79,11 @@ void log_errors(void *unused, const char *format, ...)
     va_end(ap);
 }
 
+void vlog_errors(ci_request_t * req, const char *format, va_list ap)
+{
+    vfprintf(stderr, format, ap);
+}
+
 char *CACHE_TYPE = NULL;
 int USE_DEBUG_LEVEL = -1;
 static struct ci_options_entry options[] = {
@@ -108,7 +113,11 @@ int main(int argc,char *argv[])
     ci_cfg_lib_init();
     ci_mem_init();
 
+#if ! defined(_WIN32)
     __log_error = (void (*)(void *, const char *,...)) log_errors; /*set c-icap library log  function */
+#else
+    __vlog_error = (void (*)(void *, const char *, va_list)) vlog_errors; /* set c-icap library  log function for win32..... */
+#endif
 
     if (!ci_args_apply(argc, argv, options)) {
         ci_args_usage(argv[0], options);

@@ -128,8 +128,12 @@ CI_DECLARE_FUNC(int) ci_thread_join(ci_thread_t thread_id);
 
 #define  ci_thread_mutex_t   CRITICAL_SECTION
 #define  ci_thread_rwlock_t  CRITICAL_SECTION
+#if 1
+#define  ci_thread_cond_t    CONDITION_VARIABLE
+#else
 #define  ci_thread_cond_t    HANDLE
-#define  ci_thread_t         DWORD
+#endif
+#define  ci_thread_t         HANDLE
 
 CI_DECLARE_FUNC(int)  ci_thread_mutex_init(ci_thread_mutex_t *pmutex);
 CI_DECLARE_FUNC(int) ci_thread_mutex_destroy(ci_thread_mutex_t *pmutex);
@@ -151,6 +155,7 @@ CI_DECLARE_FUNC(int) ci_thread_cond_signal(ci_thread_cond_t *pcond);
 
 CI_DECLARE_FUNC(int) ci_thread_create(ci_thread_t *thread_id, void *(*pfunc)(void *), void *parg);
 CI_DECLARE_FUNC(int) ci_thread_join(ci_thread_t thread_id);
+CI_DECLARE_FUNC(ci_thread_t) ci_thread_self();
 
 #endif
 

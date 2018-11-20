@@ -28,7 +28,13 @@ bin_SCRIPTS = c-icap-config c-icap-libicapapi-config
 
 UTIL_FLAGS=
 UTIL_LDADD=
-UTIL_LIB_SOURCES=net_io.c util.c os/unix/net_io.c os/unix/proc_mutex.c os/unix/shared_mem.c os/unix/threads.c os/unix/utilfunc.c os/unix/dlib.c
+UTIL_LIB_SOURCES=net_io.c util.c
+if IS_WIN32
+UTIL_LIB_SOURCES += os/win32/net_io.c os/win32/proc_mutex.c os/win32/shared_mem.c os/win32/threads.c os/win32/utilfunc.c os/win32/dlib.c
+else
+UTIL_LIB_SOURCES += os/unix/net_io.c os/unix/proc_mutex.c os/unix/shared_mem.c os/unix/threads.c os/unix/utilfunc.c os/unix/dlib.c
+endif
+
 if USE_OPENSSL
 UTIL_LIB_SOURCES += openssl/net_io_ssl.c
 endif
@@ -45,7 +51,12 @@ endif
 
 UTIL_LIB_SOURCES += regex.c
 endif
-UTIL_SOURCES=os/unix/proc_utils.c
+
+if IS_WIN32
+UTIL_SOURCES=winnt_server.c
+else
+UTIL_SOURCES=mpmt_server.c os/unix/proc_utils.c
+endif
 
 CICAP_CFG_SOURCES=_autoconf_table.c _c_icap_conf_table.c
 
@@ -54,8 +65,14 @@ if USE_RPATH
 RPATH_FLAG+=-rpath @libdir@
 endif
 
-if ISCYGWIN
+if IS_WINDOWS_BUILD
 libcicap_la_SOURCES = cicapcalls.c
+endif
+
+if IS_WIN32
+RDYN_LDFLAG=
+else
+RDYN_LDFLAG=-rdynamic
 endif
 
 libicapapi_la_SOURCES=  header.c body.c decode.c encode.c simple_api.c request_common.c \
@@ -68,7 +85,7 @@ libicapapi_la_SOURCES=  header.c body.c decode.c encode.c simple_api.c request_c
 c_icap_SOURCES = aserver.c request.c cfg_param.c \
                  proc_threads_queues.c http_auth.c \
                  access.c log.c service.c module.c \
-		 commands.c mpmt_server.c dlib.c info.c \
+		 commands.c dlib.c info.c \
 		 default_acl.c port.c http_server.c \
 		 $(UTIL_SOURCES) $(CICAP_CFG_SOURCES)
 
@@ -96,7 +113,7 @@ c_icap_CFLAGS= $(INVISIBILITY_CFLAG) -I$(top_srcdir)/include/ -I$(top_builddir)/
                         -DCI_DATADIR=\"$(DATADIR)\" -DCI_USE_INLINE_OBJECT_METHODS @OPENSSL_ADD_FLAG@
 
 c_icap_LDADD = libicapapi.la @DL_ADD_FLAG@ @THREADS_LDADD@ $(EXT_PROGRAMS_MKLIB)
-c_icap_LDFLAGS = -rdynamic $(RPATH_FLAG) @THREADS_LDFLAGS@
+c_icap_LDFLAGS = $(RDYN_LDFLAG) $(RPATH_FLAG) @THREADS_LDFLAGS@
 
 
 INCS = access.h body.h cfg_param.h c-icap-conf.h c-icap.h ci_threads.h \

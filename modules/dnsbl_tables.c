@@ -9,6 +9,9 @@
 #include "stats.h"
 #include "common.h"
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#endif
 
 int init_dnsbl_tables(struct ci_server_conf *server_conf);
 void release_dnsbl_tables();

@@ -20,6 +20,7 @@ AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -110,6 +111,14 @@ case "$host_os" in
 	LIBS_LDFLAGS="-no-undefined"
 	iscygwin="yes"
       ;;
+
+      *mingw32*)
+        iswin32="yes"
+        CFLAGS="-std=c99 -D_REENTRANT $CFLAGS"
+        LDFLAGS="-no-undefined"
+        LIBS="-lws2_32"
+      ;;
+
       *)
       	CFLAGS="-D_REENTRANT $CFLAGS"
 	THREADS_LDADD="-lpthread"
@@ -1283,11 +1292,12 @@ LIBS=$OLD_LIBS
 LIBS="$LIBS $EXTRALIBS"
 
 #Configure common flags
-if test a"$iscygwin" != "a"; then
+if test a"$iscygwin" != "a" -o "a$iswin32" != "a"; then
 MODULES_LIBADD="-lcicap -licapapi"
 else
 MODULES_LIBADD=""
 fi
+
 MODULES_CFLAGS="$INVISIBILITY_CFLAG -DCI_BUILD_MODULE"
 AC_SUBST(MODULES_LIBADD)
 AC_SUBST(MODULES_CFLAGS)
@@ -1298,6 +1308,8 @@ AM_CONDITIONAL(ISCYGWIN,[test a"$iscygwin" != a])
 # Now determine which modules will going to build .....
 
 AM_CONDITIONAL(USE_CPLUSPLUS, [test "a$CXX" != "a"])
+AM_CONDITIONAL(IS_WIN32, [test "a$iswin32" != "a"])
+AM_CONDITIONAL(IS_WINDOWS_BUILD, [test "a$iswin32" != "a" -o a"$iscygwin" != a])
 AM_CONDITIONAL(USE_OPENSSL, [test a"$openssl" != "ano"])
 AM_CONDITIONAL(USE_PCRE2, [test a"$pcre2" = "ayes"])
 AM_CONDITIONAL(USE_PCRE, [test a"$pcre" = "ayes"])

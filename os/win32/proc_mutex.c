@@ -28,7 +28,7 @@ int ci_proc_mutex_init(ci_proc_mutex_t * mutex, const char *name)
 {
     snprintf(mutex->name, CI_PROC_MUTEX_NAME_SIZE, "Local\%s", name);
     /*TODO: use named mutex*/
-    if ((mutex->id = CreateMutex(NULL, FALSE, NULL)) == NULL) {
+    if ((mutex->data = (void *)CreateMutex(NULL, FALSE, NULL)) == NULL) {
         ci_debug_printf(1, "Error creating mutex:%d\n", GetLastError());
         return 0;
     }
@@ -37,23 +37,49 @@ int ci_proc_mutex_init(ci_proc_mutex_t * mutex, const char *name)
 
 int ci_proc_mutex_destroy(ci_proc_mutex_t * mutex)
 {
-    CloseHandle(mutex->id);
+    CloseHandle((HANDLE)mutex->data);
     return 1;
 }
 
 int ci_proc_mutex_lock(ci_proc_mutex_t * mutex)
 {
-    WaitForSingleObject(mutex->id, INFINITE);
+    WaitForSingleObject((HANDLE)mutex->data, INFINITE);
     return 1;
 }
 
 int ci_proc_mutex_unlock(ci_proc_mutex_t * mutex)
 {
-    ReleaseMutex(mutex->id);
+    ReleaseMutex((HANDLE)mutex->data);
     return 1;
 }
 
 void ci_proc_mutex_recover_after_crash()
 {
     /*Nothing to do*/
+}
+
+int ci_proc_mutex_print_info(ci_proc_mutex_t * mutex, char *buf, size_t buf_size)
+{
+    return snprintf(buf, buf_size, " - ");
+}
+
+static ci_proc_mutex_scheme_t win32_mutex_scheme = {
+    ci_proc_mutex_init,
+    ci_proc_mutex_destroy,
+    ci_proc_mutex_lock,
+    ci_proc_mutex_unlock,
+    ci_proc_mutex_print_info,
+    "posix"
+};
+
+const ci_proc_mutex_scheme_t *ci_proc_mutex_default_scheme()
+{
+    return &win32_mutex_scheme;
+}
+
+int ci_proc_mutex_set_scheme(const char *scheme)
+{
+    if (strcasecmp(scheme, "win32") != 0)
+        return 0;
+    return 1;
 }

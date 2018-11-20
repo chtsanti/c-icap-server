@@ -1,8 +1,12 @@
 
 
 # lib_LTLIBRARIES=sys_logger.la perl_handler.la
-
+if IS_WIN32
+pkglib_LTLIBRARIES= dnsbl_tables.la shared_cache.la
+else
 pkglib_LTLIBRARIES= sys_logger.la dnsbl_tables.la shared_cache.la
+endif
+
 if USEPERL
 pkglib_LTLIBRARIES += perl_handler.la
 endif
@@ -25,7 +29,7 @@ endif
 
 AM_CPPFLAGS=-I$(top_srcdir)/ -I$(top_srcdir)/include/ -I$(top_builddir)/include/
 
-if ISCYGWIN
+if IS_WINDOWS_BUILD
 MODS_LIB_ADD=$(top_builddir)/libicapapi.la $(top_builddir)/libcicap.la
 else
 MODS_LIB_ADD=
@@ -68,6 +72,6 @@ memcached_cache_la_LDFLAGS= -module -avoid-version @LIBS_LDFLAGS@
 memcached_cache_la_SOURCES= memcached.c
 
 shared_cache_la_LIBADD= $(MODS_LIB_ADD)
-shared_cache_la_CFLAGS=
+shared_cache_la_CFLAGS= @MODULES_CFLAGS@
 shared_cache_la_LDFLAGS= -module -avoid-version @LIBS_LDFLAGS@
 shared_cache_la_SOURCES= shared_cache.c

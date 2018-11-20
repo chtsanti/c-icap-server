@@ -388,7 +388,7 @@ int Br_Decompress(BrotliDecoderState* s, const char *buf, int inlen, void *outbu
     long long outsize;
     size_t total_out = 0;
     BrotliDecoderResult result = BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT;
-    uint8_t *out, OUT[kFileBufferSize];
+    uint8_t *out, OUTBUF[kFileBufferSize];
 
     ci_debug_printf(4, "data-compression: brotli decompress called size: %d\n",
                     inlen);
@@ -404,7 +404,7 @@ int Br_Decompress(BrotliDecoderState* s, const char *buf, int inlen, void *outbu
                 return CI_UNCOMP_ERR_OUTPUT;
             available_out = outbuf_size;
         } else {
-            out = OUT;
+            out = OUTBUF;
             available_out = kFileBufferSize;
         }
         next_out = out;
@@ -541,7 +541,7 @@ int ci_mem_inflate(const char *inbuf, size_t inlen, void *out_obj, char *(*get_o
     unsigned have, written, can_write, out_size;
     ci_off_t unzipped_size;
     z_stream strm;
-    unsigned char *out, OUT[CHUNK];
+    unsigned char *out, OUTBUF[CHUNK];
 
     /* allocate inflate state */
     strm.zalloc = alloc_a_buffer;
@@ -572,7 +572,7 @@ do_mem_inflate_retry:
             }
         } else {
             strm.avail_out = out_size = CHUNK;
-            strm.next_out = out = OUT;
+            strm.next_out = out = OUTBUF;
         }
         ret = inflate(&strm, Z_NO_FLUSH);
         if (ret == Z_STREAM_ERROR) {
@@ -694,7 +694,7 @@ int ci_mem_bzunzip(const char *buf, int inlen,  void *out_obj, char *(*get_outbu
     unsigned have, written, can_write, out_size;
     ci_off_t unzipped_size;
     bz_stream strm;
-    char *out, OUT[CHUNK];
+    char *out, OUTBUF[CHUNK];
 
     strm.bzalloc = bzalloc_a_buffer;
     strm.bzfree = bzfree_a_buffer;
@@ -725,7 +725,7 @@ int ci_mem_bzunzip(const char *buf, int inlen,  void *out_obj, char *(*get_outbu
             }
         } else {
             strm.avail_out = out_size = CHUNK;
-            strm.next_out = out = OUT;
+            strm.next_out = out = OUTBUF;
         }
         ret = BZ2_bzDecompress(&strm);
         switch (ret) {

@@ -118,7 +118,11 @@ void log_access(ci_request_t * req, int status)
     }
 }
 
+#ifndef _WIN32
 extern process_pid_t MY_PROC_PID;
+#else
+extern DWORD MY_PROC_PID;
+#endif
 static const char *log_prefix(char *buf, size_t buf_size)
 {
     if (MY_PROC_PID)

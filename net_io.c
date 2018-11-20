@@ -30,6 +30,10 @@
 
 #include <assert.h>
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#endif
+
 
 #ifdef USE_IPV6
 void ci_fill_sockaddr(ci_sockaddr_t * addr)

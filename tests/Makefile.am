@@ -9,9 +9,15 @@ RPATH_FLAG=
 if USE_RPATH
 RPATH_FLAG+=-rpath @libdir@
 endif
+if IS_WIN32
+RDYN_LDFLAG=
+else
+RDYN_LDFLAG=-rdynamic
+endif
+
 
 AM_CFLAGS=-I$(top_srcdir)/ -I$(top_srcdir)/include/ -I$(top_builddir)/include/
-AM_LDFLAGS = -rdynamic $(RPATH_FLAG) @THREADS_LDFLAGS@
+AM_LDFLAGS = $(RDYN_LDFLAG) $(RPATH_FLAG) @THREADS_LDFLAGS@
 LDADD = ../libicapapi.la @THREADS_LDADD@ @DL_ADD_FLAG@ $(EXT_PROGRAMS_MKLIB)
 
 if USE_CPLUSPLUS

@@ -22,9 +22,12 @@
 #include "request.h"
 #include "request_util.h"
 #include "debug.h"
+#include "util.h"
 #include "txt_format.h"
 
 #include <sys/time.h>
+#include <time.h>
+
 
 #define MAX_VARIABLE_SIZE 256
 

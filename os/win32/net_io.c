@@ -22,6 +22,7 @@
 #include <errno.h>
 #include "debug.h"
 #include "net_io.h"
+#include "port.h"
 #include "cfg_param.h"
 
 
@@ -61,9 +62,9 @@ int windows_init()
 }
 
 
-ci_socket icap_init_server(int port, int *protocol_family, int secs_to_linger)
+ci_socket icap_init_server(ci_port_t *port)
+                           //int port, int *protocol_family, int secs_to_linger)
 {
-    ci_socket s;
     int er;
     struct sockaddr_in addr;
 
@@ -71,29 +72,29 @@ ci_socket icap_init_server(int port, int *protocol_family, int secs_to_linger)
         ci_debug_printf(1, "Error initialize windows sockets...\n");
     }
 
-    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (s == INVALID_SOCKET) {
+    port->fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (port->fd == INVALID_SOCKET) {
         er = WSAGetLastError();
         ci_debug_printf(1, "Error opening socket ....%d\n", er);
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
 
-    icap_socket_opts(s, secs_to_linger);
+    icap_socket_opts(port->fd, port->secs_to_linger);
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
+    addr.sin_port = htons(port->port);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(s, (struct sockaddr *) &addr, sizeof(addr))) {
+    if (bind(port->fd, (struct sockaddr *) &addr, sizeof(addr))) {
         ci_debug_printf(1, "Error bind  \n");;
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
-    if (listen(s, 512)) {
+    if (listen(port->fd, 512)) {
         ci_debug_printf(1, "Error listen .....\n");
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
-    *protocol_family = AF_INET;
-    return s;
+    port->protocol_family = AF_INET;
+    return port->fd;
 }
 
 
@@ -134,18 +135,12 @@ int icap_socket_opts(ci_socket s, int secs_to_linger)
     return 1;
 }
 
-
-
-
-
-int ci_netio_init(ci_socket s)
+int ci_connection_set_nonblock(ci_connection_t *conn)
 {
-    u_long val;
-    val = 1;
-    ioctlsocket(s, FIONBIO, &val);
+    u_long nonblock = 1;
+    ioctlsocket(conn->fd, FIONBIO, &nonblock);
     return 1;
 }
-
 
 /*
 int ci_wait_for_data(ci_socket fd,int secs,int what_wait){
@@ -180,13 +175,13 @@ int ci_wait_for_data(ci_socket fd,int secs,int what_wait){
 */
 
 
-int ci_wait_ms_for_data(int fd, int msecs, int what_wait)
+int ci_wait_ms_for_data(ci_socket fd, int msecs, int what_wait)
 {
     fd_set rfds, wfds, *preadfds, *pwritefds;
     struct timeval tv;
     int ret = 0;
 
-    if (secs >= 0) {
+    if (msecs >= 0) {
         tv.tv_sec = msecs / 1000;
         tv.tv_usec = (msecs % 1000) * 1000;
     }
@@ -208,7 +203,7 @@ int ci_wait_ms_for_data(int fd, int msecs, int what_wait)
 
     if ((ret =
                 select(fd + 1, preadfds, pwritefds, NULL,
-                       (secs >= 0 ? &tv : NULL))) > 0) {
+                       (msecs >= 0 ? &tv : NULL))) > 0) {
         ret = 0;
         if (preadfds && FD_ISSET(fd, preadfds))
             ret = wait_for_read;
@@ -336,4 +331,46 @@ int ci_hard_close(ci_socket fd)
 {
     closesocket(fd);
     return 1;
+}
+
+ci_socket_t ci_socket_connect(ci_sockaddr_t *srvaddr, int *errcode)
+{
+    unsigned int addrlen = 0;
+    ci_socket_t s;
+    s = socket(srvaddr->ci_sin_family, SOCK_STREAM, 0);
+    if (s == INVALID_SOCKET)
+        return INVALID_SOCKET;
+
+#ifdef USE_IPV6
+    if (srvaddr->ci_sin_family == AF_INET6)
+        addrlen = sizeof(struct sockaddr_in6);
+    else
+#endif
+        addrlen = sizeof(struct sockaddr_in);
+
+    // Sets the fd to non-block mode
+    u_long nonblock = 1;
+    ioctlsocket(s, FIONBIO, &nonblock);
+
+    int ret;
+    ret = connect(s, (struct sockaddr *) &(srvaddr->sockaddr), addrlen);
+    if (ret == SOCKET_ERROR) {
+        int error = WSAGetLastError();
+        if (error != WSAEINPROGRESS && error != WSAEWOULDBLOCK && error != WSAEINVAL) {
+            closesocket(s);
+            s = INVALID_SOCKET;
+        }
+    }
+
+    return s;
+}
+
+int ci_socket_connected_ok(ci_socket_t s)
+{
+    int errcode = 0;
+    int len = sizeof(errcode);
+    if (getsockopt(s, SOL_SOCKET, SO_ERROR, (char *)&errcode, &len) != 0)
+        errcode = errno;
+
+    return errcode;
 }
