@@ -71,7 +71,11 @@ void log_access(ci_request_t * req, int status)
         default_logger->log_access(req);
 }
 
+#ifndef _WIN32
 extern process_pid_t MY_PROC_PID;
+#else
+extern DWORD MY_PROC_PID;
+#endif
 void log_server(ci_request_t * req, const char *format, ...)
 {
     /*req can be NULL......... */

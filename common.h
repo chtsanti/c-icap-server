@@ -8,6 +8,13 @@
 #include "config-w32.h"
 #endif
 
+#ifdef _WIN32
+#define _WIN32_WINNT 0x0600 /* Set to windows vista and later*/
+#include <winsock2.h>
+#include <windows.h>
+#include <winbase.h>
+#endif
+
 #ifdef HAVE_STDIO_H
 #include <stdio.h>
 #endif
@@ -50,6 +57,10 @@
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
 #endif
 
 #ifdef HAVE_LIMITS_H

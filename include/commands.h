@@ -51,17 +51,17 @@ typedef struct ci_command {
 
 
 /* Backward compatible function for ci_command_register_ctl */
-CI_DECLARE_FUNC(void) register_command(const char *name, int type, void (*command_action)(const char *name,int type, const char **argv));
+CI_DECL_PROCESS_FUNC(void) register_command(const char *name, int type, void (*command_action)(const char *name,int type, const char **argv));
 
 /* backward compatible function for ci_command_register_action */
-CI_DECLARE_FUNC(void) register_command_extend(const char *name, int type, void *data,
+CI_DECL_PROCESS_FUNC(void) register_command_extend(const char *name, int type, void *data,
         void (*command_action) (const char *name, int type, void *data));
 
-CI_DECLARE_FUNC(void) ci_command_register_ctl_cmd(const char *name, int type, void (*command_action)(const char *name,int type, const char **argv));
-CI_DECLARE_FUNC(void) ci_command_register_action(const char *name, int type, void *data,
+CI_DECL_PROCESS_FUNC(void) ci_command_register_ctl_cmd(const char *name, int type, void (*command_action)(const char *name,int type, const char **argv));
+CI_DECL_PROCESS_FUNC(void) ci_command_register_action(const char *name, int type, void *data,
         void (*command_action) (const char *name, int type, void *data));
-CI_DECLARE_FUNC(void) ci_command_schedule_on(const char *name, void *data, time_t time);
-CI_DECLARE_FUNC(void) ci_command_schedule(const char *name, void *data, time_t afterSecs);
+CI_DECL_PROCESS_FUNC(void) ci_command_schedule_on(const char *name, void *data, time_t time);
+CI_DECL_PROCESS_FUNC(void) ci_command_schedule(const char *name, void *data, time_t afterSecs);
 
 void commands_init();
 void commands_reset();

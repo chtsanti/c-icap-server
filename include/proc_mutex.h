@@ -57,13 +57,13 @@ typedef struct ci_proc_mutex_scheme {
 struct ci_proc_mutex {
     char name[CI_PROC_MUTEX_NAME_SIZE];
 
+    const ci_proc_mutex_scheme_t *scheme;
 #if defined(_WIN32)
 
     HANDLE id;
 
 #else
 
-    const ci_proc_mutex_scheme_t *scheme;
     union {
 #if defined(USE_SYSV_IPC_MUTEX)
         struct {

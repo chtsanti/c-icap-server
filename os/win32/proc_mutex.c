@@ -52,3 +52,29 @@ int ci_proc_mutex_unlock(ci_proc_mutex_t * mutex)
     ReleaseMutex(mutex->id);
     return 1;
 }
+
+static int ci_proc_mutex_print_info(ci_proc_mutex_t * mutex, char *buf, size_t buf_size)
+{
+    return snprintf(buf, buf_size, " - ");
+}
+
+static ci_proc_mutex_scheme_t win32_mutex_scheme = {
+    ci_proc_mutex_init,
+    ci_proc_mutex_destroy,
+    ci_proc_mutex_lock,
+    ci_proc_mutex_unlock,
+    ci_proc_mutex_print_info,
+    "posix"
+};
+
+const ci_proc_mutex_scheme_t *ci_proc_mutex_default_scheme()
+{
+    return &win32_mutex_scheme;
+}
+
+int ci_proc_mutex_set_scheme(const char *scheme)
+{
+    if (strcasecmp(scheme, "win32") != 0)
+        return 0;
+    return 1;
+}

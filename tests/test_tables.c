@@ -33,6 +33,10 @@ void log_errors(void *unused, const char *format, ...)
     va_end(ap);
 }
 
+void vlog_errors(void *unused, const char *format, va_list ap)
+{
+    vfprintf(stderr, format, ap);
+}
 
 int load_module(const char *directive,const char **argv,void *setdata)
 {
@@ -153,7 +157,11 @@ int main(int argc,char *argv[])
     mem_init();
     init_internal_lookup_tables();
 
+#if ! defined(_WIN32)
     __log_error = (void (*)(void *, const char *,...)) log_errors;     /*set c-icap library log  function */
+#else
+    __vlog_error = (void (*)(void *, const char *, va_list)) vlog_errors; /* set c-icap library  log function for win32..... */
+#endif
 
     if (!ci_args_apply(argc, argv, options) || !path || !keys) {
         ci_args_usage(argv[0], options);

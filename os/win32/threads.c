@@ -18,6 +18,8 @@
  */
 
 #include "ci_threads.h"
+#include <synchapi.h>
+
 int ci_thread_mutex_init(ci_thread_mutex_t * pmutex)
 {
     InitializeCriticalSection(pmutex);
@@ -44,37 +46,57 @@ int ci_thread_mutex_unlock(ci_thread_mutex_t * pmutex)
 
 int ci_thread_cond_init(ci_thread_cond_t * pcond)
 {
+#if 1
+    InitializeConditionVariable(pcond);
+#else
     *pcond = CreateEvent(NULL, FALSE, FALSE, NULL);
+#endif
     return 0;
 }
 
 int ci_thread_cond_destroy(ci_thread_cond_t * pcond)
 {
+#if 1
+    ;
+#else
     CloseHandle(*pcond);
     *pcond = NULL;
+#endif
     return 0;
 }
 
 int ci_thread_cond_wait(ci_thread_cond_t * pcond, ci_thread_mutex_t * pmutex)
 {
+#if 1
+    SleepConditionVariableCS(pcond, pmutex, INFINITE);
+#else
     ci_thread_mutex_unlock(pmutex);
     WaitForSingleObject(*pcond, INFINITE);
     ci_thread_mutex_lock(pmutex);
+#endif
     return 0;
 }
 
 int ci_thread_cond_broadcast(ci_thread_cond_t * pcond)
 {
+#if 1
+    WakeAllConditionVariable(pcond);
+#else
     SetEvent(*pcond);          /*This do not work with autoreset events.
                                    But now the ci_thread_cond_broadcast
                                    not used by the c-icap server.
                                    SS: This is wrong used by worker thread to kill childs..... */
+#endif
     return 0;
 }
 
 int ci_thread_cond_signal(ci_thread_cond_t * pcond)
 {
+#if 1
+    WakeConditionVariable(pcond);
+#else
     SetEvent(*pcond);
+#endif
     return 0;
 }
 
@@ -92,6 +114,11 @@ int ci_thread_join(ci_thread_t thread_id)
         return -1;
     }
     return 0;
+}
+
+ci_thread_t ci_thread_self()
+{
+    return GetCurrentThread();
 }
 
 /*Needs some work to implement a better solution here. At Vista there are a number of

@@ -28,6 +28,12 @@
 
 static int old_requests = 0;
 
+#ifdef _WIN32
+#define PID_VALID(pid) (pid != INVALID_HANDLE_VALUE)
+#else
+#define PID_VALID(pid) (pid != 0)
+#endif
+
 struct connections_queue *init_queue(int size)
 {
     int ret;
@@ -155,8 +161,13 @@ struct childs_queue *create_childs_queue(int size)
     ci_stat_memblock_reset(q->stats_history);
 
     for (i = 0; i < q->size; i++) {
+#ifdef _WIN32
+        q->childs[i].pid = INVALID_HANDLE_VALUE;
+        q->childs[i].pipe = INVALID_HANDLE_VALUE;
+#else
         q->childs[i].pid = 0;
         q->childs[i].pipe = -1;
+#endif
     }
 
     /* reset statistics */
@@ -228,7 +239,7 @@ int childs_queue_is_empty(struct childs_queue *q)
 {
     int i;
     for (i = 0; i < q->size; i++) {
-        if (q->childs[i].pid != 0)
+        if (PID_VALID(q->childs[i].pid))
             return 0;
     }
     return 1;
@@ -260,7 +271,7 @@ child_shared_data_t *register_child(struct childs_queue * q,
                     q->size,  q->stats_block_size, (int) sizeof(child_shared_data_t) * q->size);
     ci_proc_mutex_lock(&(q->queue_mtx));
     for (i = 0; i < q->size; i++) {
-        if (q->childs[i].pid == 0) {
+        if (!PID_VALID(q->childs[i].pid)) {
             q->childs[i].pid = pid;
             q->childs[i].freeservers = maxservers;
             q->childs[i].usedservers = 0;
@@ -285,7 +296,7 @@ child_shared_data_t *register_child(struct childs_queue * q,
 
 void announce_child(struct childs_queue *q, process_pid_t pid)
 {
-    if (q->childs && pid)
+    if (q->childs && PID_VALID(pid))
         q->srv_stats->started_childs++;
 }
 
@@ -299,11 +310,20 @@ int remove_child(struct childs_queue *q, process_pid_t pid, int status)
     ci_proc_mutex_lock(&(q->queue_mtx));
     for (i = 0; i < q->size; i++) {
         if (q->childs[i].pid == pid) {
+#ifdef _WIN32
+            q->childs[i].pid = INVALID_HANDLE_VALUE;
+#else
             q->childs[i].pid = 0;
+#endif
             old_requests += q->childs[i].requests;
             if (q->childs[i].pipe >= 0) {
+#ifdef _WIN32
+                CloseHandle(q->childs[i].pipe);
+                q->childs[i].pipe = INVALID_HANDLE_VALUE;
+#else
                 close(q->childs[i].pipe);
                 q->childs[i].pipe = -1;
+#endif
             }
             child_stats = q->stats_area + i * (q->stats_block_size);
             /*re-arange pointers in childs memblock*/
@@ -327,7 +347,7 @@ int find_a_child_to_be_killed(struct childs_queue *q)
     freeservers = q->childs[0].freeservers;
     which = 0;
     for (i = 1; i < q->size; i++) {
-        if (q->childs[i].pid != 0 && freeservers > q->childs[i].freeservers) {
+        if (PID_VALID(q->childs[i].pid) && freeservers > q->childs[i].freeservers) {
             freeservers = q->childs[i].freeservers;
             which = i;
         }
@@ -343,7 +363,7 @@ int find_a_child_nrequests(struct childs_queue *q, int max_requests)
     requests = max_requests;
     ci_proc_mutex_lock(&(q->queue_mtx));
     for (i = 0; i < q->size; i++) {
-        if (q->childs[i].pid == 0)
+        if (!PID_VALID(q->childs[i].pid))
             continue;
         if (q->childs[i].to_be_killed) {      /*If a death of a child pending do not kill any other */
             ci_proc_mutex_unlock(&(q->queue_mtx));
@@ -364,7 +384,7 @@ int find_an_idle_child(struct childs_queue *q)
     which = -1;
     ci_proc_mutex_lock(&(q->queue_mtx));
     for (i = 0; i < q->size; i++) {
-        if (q->childs[i].pid == 0)
+        if (!PID_VALID(q->childs[i].pid))
             continue;
         if (q->childs[i].to_be_killed) {      /*A child going to die wait... */
             ci_proc_mutex_unlock(&(q->queue_mtx));
@@ -395,7 +415,7 @@ int childs_queue_stats(struct childs_queue *q, int *childs, int *freeservers,
         return 0;
 
     for (i = 0; i < q->size; i++) {
-        if (q->childs[i].pid != 0 && q->childs[i].to_be_killed == 0) {
+        if (PID_VALID(q->childs[i].pid) && q->childs[i].to_be_killed == 0) {
             (*childs)++;
             (*freeservers) += q->childs[i].freeservers;
             (*used) += q->childs[i].usedservers;
@@ -421,7 +441,7 @@ void dump_queue_statistics(struct childs_queue *q)
         return;
 
     for (i = 0; i < q->size; i++) {
-        if (q->childs[i].pid != 0 && q->childs[i].to_be_killed == 0) {
+        if (PID_VALID(q->childs[i].pid) && q->childs[i].to_be_killed == 0) {
             childs++;
             freeservers += q->childs[i].freeservers;
             used += q->childs[i].usedservers;

@@ -23,9 +23,6 @@
 #include "header.h"
 #include "body.h"
 #include "debug.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "dlib.h"
 #include "cfg_param.h"
 

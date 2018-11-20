@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdio.h>
 
 const char *ci_strnstr(const char *s, const char *find, size_t slen)
 {
