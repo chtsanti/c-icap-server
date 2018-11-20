@@ -182,9 +182,9 @@ void file_log_close();
 void file_log_access(ci_request_t *req);
 void file_log_server(const char *server, const char *format, va_list ap);
 
-/*char *LOGS_DIR=LOGDIR;*/
-char *SERVER_LOG_FILE = LOGDIR "/cicap-server.log";
-/*char *ACCESS_LOG_FILE = LOGDIR "/cicap-access.log";*/
+/*char *LOGS_DIR = CI_LOGDIR;*/
+char *SERVER_LOG_FILE = CI_LOGDIR "/cicap-server.log";
+/*char *ACCESS_LOG_FILE = CI_LOGDIR "/cicap-access.log";*/
 
 struct logfile {
     char *file;
