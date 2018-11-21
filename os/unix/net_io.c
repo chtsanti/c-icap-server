@@ -31,7 +31,7 @@
 #endif
 #include "debug.h"
 #include "net_io.h"
-
+#include "util.h"
 
 const char *ci_sockaddr_t_to_host(ci_sockaddr_t * addr, char *hname,
                                   int maxhostlen)
@@ -52,7 +52,7 @@ int icap_init_server_ipv6(int port, int *protocol_family, int secs_to_linger)
     fd = socket(AF_INET6, SOCK_STREAM, 0);
     if (fd == -1) {
         ci_debug_printf(1, "Error opening ipv6 socket ....\n");
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
 
     icap_socket_opts(fd, secs_to_linger);
@@ -65,12 +65,12 @@ int icap_init_server_ipv6(int port, int *protocol_family, int secs_to_linger)
     if (bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
         ci_debug_printf(1, "Error bind  at ipv6 address \n");;
         close(fd);
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
     if (listen(fd, 512)) {
         ci_debug_printf(1, "Error listen at ipv6 address.....\n");
         close(fd);
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
     *protocol_family = AF_INET6;
     return fd;
@@ -87,7 +87,7 @@ int icap_init_server(int port, int *protocol_family, int secs_to_linger)
 #ifdef USE_IPV6
     if ((fd =
                 icap_init_server_ipv6(port, protocol_family,
-                                      secs_to_linger)) != CI_SOCKET_ERROR)
+                                      secs_to_linger)) != CI_SOCKET_INVALID)
         return fd;
     ci_debug_printf(1,
                     "WARNING! Error bind to an ipv6 address. Trying ipv4...\n");
@@ -96,7 +96,7 @@ int icap_init_server(int port, int *protocol_family, int secs_to_linger)
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1) {
         ci_debug_printf(1, "Error opening socket ....\n");
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
 
     icap_socket_opts(fd, secs_to_linger);
@@ -108,11 +108,11 @@ int icap_init_server(int port, int *protocol_family, int secs_to_linger)
 
     if (bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
         ci_debug_printf(1, "Error bind  \n");;
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
     if (listen(fd, 512)) {
         ci_debug_printf(1, "Error listen .....\n");
-        return CI_SOCKET_ERROR;
+        return CI_SOCKET_INVALID;
     }
     *protocol_family = AF_INET;
     return fd;
@@ -387,6 +387,42 @@ int ci_hard_close(int fd)
     return 1;
 }
 
+ci_socket_t ci_socket_connect(ci_sockaddr_t *srvaddr, int *errcode)
+{
+    unsigned int addrlen = 0;
+    int fd;
+    fd = socket(srvaddr->ci_sin_family, SOCK_STREAM, 0);
+    if (fd == -1)
+        return CI_SOCKET_INVALID;
+
+#ifdef USE_IPV6
+    if (srvaddr->ci_sin_family == AF_INET6)
+        addrlen = sizeof(struct sockaddr_in6);
+    else
+#endif
+        addrlen = sizeof(struct sockaddr_in);
+
+    // Sets the fd to non-block mode
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+
+    int ret;
+    ret = connect(fd, (struct sockaddr *) &(srvaddr->sockaddr), addrlen);
+    if (ret < 0 && errno != EINPROGRESS) {
+        close(fd);
+        fd = -1;
+    }
+    return (ci_socket_t)fd;
+}
+
+int ci_socket_connected_ok(ci_socket_t fd)
+{
+    int errcode = 0;
+    socklen_t len = sizeof(errcode);
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &errcode, &len) != 0)
+        errcode = errno;
+
+    return errcode;
+}
 
 /*
 int readline(int fd,char *buf){

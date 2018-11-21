@@ -782,7 +782,7 @@ void listener_thread(int *fd)
             } while (errno == EINTR && !child_data->to_be_killed);
 
             // Probably ECONNABORTED or similar error
-            if (conn.fd < 0)
+            if (!ci_socket_valid(conn.fd))
                 continue;
 
             claddrlen = sizeof(conn.srvaddr.sockaddr);
@@ -1039,7 +1039,7 @@ int init_server(int port, int *family)
         close(LISTEN_SOCKET);
 
     LISTEN_SOCKET = icap_init_server(port, family, MAX_SECS_TO_LINGER);
-    if (LISTEN_SOCKET == CI_SOCKET_ERROR)
+    if (LISTEN_SOCKET == CI_SOCKET_INVALID)
         return 0;
     return 1;
 }
