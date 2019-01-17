@@ -85,6 +85,7 @@ int PIPELINING = 1;
 int CHECK_FOR_BUGGY_CLIENT = 0;
 int ALLOW204_AS_200OK_ZERO_ENCAPS = 0;
 int FAKE_ALLOW204 = 1;
+int UMASK = 0;
 
 
 extern char *SERVER_LOG_FILE;
@@ -151,6 +152,7 @@ static struct ci_conf_entry conf_variables[] = {
     {"Port", &CI_CONF.PORT, intl_cfg_set_int, NULL},
     {"User", &CI_CONF.RUN_USER, intl_cfg_set_str, NULL},
     {"Group", &CI_CONF.RUN_GROUP, intl_cfg_set_str, NULL},
+    {"Umask", &UMASK, intl_cfg_set_octal, NULL},
     {"ServerAdmin", &CI_CONF.SERVER_ADMIN, intl_cfg_set_str, NULL},
     {"ServerName", &CI_CONF.SERVER_NAME, intl_cfg_set_str, NULL},
     {"LoadMagicFile", NULL, cfg_load_magicfile, NULL},
@@ -315,6 +317,8 @@ void print_conf_variables(struct ci_conf_entry *table)
             }
         } else if (table[i].action == intl_cfg_set_int) {
             ci_debug_printf(9, "%d\n", *(int *) table[i].data);
+        } else if (table[i].action == intl_cfg_set_octal) {
+            ci_debug_printf(9, "0%.3o\n", *(int *) table[i].data);
         } else if (table[i].action == intl_cfg_size_off) {
             ci_debug_printf(9, "%" PRINTF_OFF_T "\n",
                             (CAST_OFF_T) *(ci_off_t *) table[i].data);
@@ -1088,6 +1092,14 @@ int intl_cfg_set_int(const char *directive, const char **argv, void *setdata)
         return 0;
     cfg_default_value_store(setdata, setdata, sizeof(int));
     return ci_cfg_set_int(directive, argv, setdata);
+}
+
+int intl_cfg_set_octal(const char *directive, const char **argv, void *setdata)
+{
+    if (!setdata)
+        return 0;
+    cfg_default_value_store(setdata, setdata, sizeof(int));
+    return ci_cfg_set_octal(directive, argv, setdata);;
 }
 
 int intl_cfg_onoff(const char *directive, const char **argv, void *setdata)
