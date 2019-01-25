@@ -344,7 +344,7 @@ ci_acl_type_t acl_auth = {
 #ifdef _WIN32
     &acl_auth_ops
 #else
-    &ci_str_ext_ops;
+    &ci_str_ext_ops
 #endif
 };
 
