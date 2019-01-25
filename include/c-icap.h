@@ -121,8 +121,13 @@
 */
 typedef off_t ci_off_t;
 #if CI_SIZEOF_OFF_T > CI_SIZEOF_LONG
+#ifdef _WIN32
+#   define PRINTF_OFF_T "I64d"
+#   define CAST_OFF_T  int64_t
+#else
 #   define PRINTF_OFF_T "lld"
 #   define CAST_OFF_T long long int
+#endif
 #   define ci_strto_off_t strtoll
 #   define CI_STRTO_OFF_T_MAX LLONG_MAX
 #   define CI_STRTO_OFF_T_MIN LLONG_MIN
