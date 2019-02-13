@@ -369,6 +369,7 @@ static int zlib_inflate_step(const char *buf, int len, char *unzipped_buf, int *
     struct unzipBuf ub;
     ub.buf = unzipped_buf;
     ub.buf_size = *unzipped_buf_len;
+    ub.out_len = 0;
     int ret = ci_mem_inflate(buf, len,  &ub, get_buf_outbuf, write_once_to_outbuf, len);
     ci_debug_printf(5, "zlib_inflate_step: retcode %d, unzipped data: %d\n", ret, (int)ub.out_len);
     if (ub.out_len > 0) {
@@ -499,6 +500,7 @@ static int bzlib_uncompress_step(const char *buf, int len, char *unzipped_buf, i
     struct unzipBuf ub;
     ub.buf = unzipped_buf;
     ub.buf_size = *unzipped_buf_len;
+    ub.out_len = 0;
     int ret = ci_mem_bzunzip(buf, len,  &ub, get_buf_outbuf, write_once_to_outbuf, len);
     ci_debug_printf(5, "bzlib_uncompress_step: retcode %d, unzipped data: %d\n", ret, (int)ub.out_len);
     if (ub.out_len > 0) {
