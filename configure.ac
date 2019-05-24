@@ -877,7 +877,7 @@ LIBS="$LIBS $EXTRALIBS"
 
 #Configure common flags
 if test a"$iscygwin" != "a"; then
-MODULES_LIBADD="-lcicap"
+MODULES_LIBADD="-lcicap -licapapi"
 else
 MODULES_LIBADD=""
 fi
