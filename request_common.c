@@ -738,12 +738,10 @@ static int client_create_request(ci_request_t * req, char *servername, char *ser
         return CI_ERROR;
 
     req->type = reqtype;
-    snprintf(buf, 255, "%s icap://%s/%s ICAP/1.0",
+    snprintf(buf, sizeof(buf), "%s icap://%s/%s ICAP/1.0",
              ci_method_string(reqtype), servername, service);
-    buf[255] = '\0';
     ci_headers_add(req->request_header, buf);
-    snprintf(buf, 255, "Host: %s", servername);
-    buf[255] = '\0';
+    snprintf(buf, sizeof(buf), "Host: %s", servername);
     ci_headers_add(req->request_header, buf);
     ci_headers_add(req->request_header, "User-Agent: C-ICAP-Client-Library/0.01");
 
