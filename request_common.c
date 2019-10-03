@@ -100,7 +100,7 @@ void ci_request_t_pack(ci_request_t * req, int is_request)
     req->packed = 1;
 
     if (is_request && req->preview >= 0) {
-        sprintf(buf, "Preview: %d", req->preview);
+        snprintf(buf, sizeof(buf), "Preview: %d", req->preview);
         ci_headers_add(req->request_header, buf);
     }
 
@@ -120,7 +120,7 @@ void ci_request_t_pack(ci_request_t * req, int is_request)
 
 
     if (elist[0] == NULL) {
-        sprintf(buf, "Encapsulated: null-body=0");
+        snprintf(buf, sizeof(buf), "Encapsulated: null-body=0");
     } else {
         added = snprintf(buf, sizeof(buf), "Encapsulated: ");
         for (i = 0; elist[i] != NULL && i < 3 && added < sizeof(buf); ++i)
@@ -842,8 +842,9 @@ static int client_send_request_headers(ci_request_t * req, int has_eof, int time
         }
     }
 
+    static const size_t REQ_WBUF_SIZE = sizeof(((request_t *)0)->wbuf);
     if (req->preview > 0 && req->preview_data.used > 0) {
-        bytes = sprintf(req->wbuf, "%x\r\n", req->preview);
+        bytes = snprintf(req->wbuf, REQ_WBUF_SIZE, "%x\r\n", req->preview);
         if (ci_writen(req->connection->fd, req->wbuf, bytes, timeout) < 0)
             return CI_ERROR;
         req->bytes_out += bytes;
