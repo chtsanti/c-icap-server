@@ -288,15 +288,16 @@ void file_log_access(ci_request_t *req)
 
 void file_log_server(const char *server, const char *format, va_list ap)
 {
-    char buf[STR_TIME_SIZE];
+    char buf[1024];
 
     if (!server_log)
         return;
 
-    ci_strtime(buf);
-    fprintf(server_log, "%s, %s, ", buf, server);
-    vfprintf(server_log, format, ap);
-//     fprintf(server_log,"\n");
+    ci_strtime(buf); /* requires STR_TIME_SIZE=64 bytes size */
+    const size_t len = strlen(buf);
+    const size_t written = snprintf(buf + len,  sizeof(buf) - len, ", %s, %s", server, format);
+    assert(written < sizeof(buf) - len);
+    vfprintf(server_log, buf, ap);
 }
 
 
