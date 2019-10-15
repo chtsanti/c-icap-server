@@ -34,6 +34,7 @@
 #include "net_io.h"
 #include "cfg_param.h"
 #include "debug.h"
+#include "util.h"
 
 
 ci_str_vector_t *http_no_headers = NULL;
@@ -77,8 +78,6 @@ void build_respmod_headers(int fd, ci_headers_list_t *headers)
     struct stat filestat;
     int filesize;
     char lbuf[512];
-//     struct tm ltime;
-    time_t ltimet;
 
     ci_headers_add(headers, "HTTP/1.0 200 OK");
     fstat(fd, &filestat);
@@ -87,17 +86,16 @@ void build_respmod_headers(int fd, ci_headers_list_t *headers)
     if (!http_no_resp_headers || !ci_str_vector_search(http_no_resp_headers, "Date")) {
         strncpy(lbuf, "Date: ", sizeof(lbuf));
         lbuf[sizeof(lbuf) -1] = '\0';
-        time(&ltimet);
-        ctime_r(&ltimet, lbuf + strlen(lbuf)); /*TODO: replace with strftime*/
-        lbuf[strlen(lbuf) - 1] = '\0';
+        const size_t DATE_PREFIX_LEN = strlen(lbuf);
+        ci_strntime_rfc822(lbuf + DATE_PREFIX_LEN, sizeof(lbuf) - DATE_PREFIX_LEN);
         ci_headers_add(headers, lbuf);
     }
 
     if (!http_no_resp_headers || !ci_str_vector_search(http_no_resp_headers, "Last-Modified")) { 
         strncpy(lbuf, "Last-Modified: ", sizeof(lbuf));
         lbuf[sizeof(lbuf) -1] = '\0';
-        ctime_r(&ltimet, lbuf + strlen(lbuf)); /*TODO: replace with strftime*/
-        lbuf[sizeof(lbuf) - 1] = '\0';
+        const size_t LM_PREFIX_LEN = strlen(lbuf);
+        ci_to_strntime_rfc822(lbuf + LM_PREFIX_LEN, sizeof(lbuf) - LM_PREFIX_LEN, &filestat.st_mtime);
         ci_headers_add(headers, lbuf);
     }
 
@@ -114,7 +112,6 @@ void build_reqmod_headers(char *url, const char *method, int fd, ci_headers_list
     struct stat filestat;
     int filesize;
     char lbuf[1024];
-    time_t ltimet;
 
     snprintf(lbuf, sizeof(lbuf), "%s %s HTTP/1.0", method, url);
     ci_headers_add(headers, lbuf);
@@ -122,9 +119,8 @@ void build_reqmod_headers(char *url, const char *method, int fd, ci_headers_list
     if (!http_no_headers || !ci_str_vector_search(http_no_headers, "Date")) {
         strncpy(lbuf, "Date: ", sizeof(lbuf));
         lbuf[sizeof(lbuf) -1] = '\0';
-        time(&ltimet);
-        ctime_r(&ltimet, lbuf + strlen(lbuf)); /*TODO: replace with strftime*/
-        lbuf[sizeof(lbuf) - 1] = '\0';
+        const size_t DATE_PREFIX_LEN = strlen(lbuf);
+        ci_strntime_rfc822(lbuf + DATE_PREFIX_LEN, sizeof(lbuf) - DATE_PREFIX_LEN);
         ci_headers_add(headers, lbuf);
     }
 
@@ -134,8 +130,8 @@ void build_reqmod_headers(char *url, const char *method, int fd, ci_headers_list
             filesize = filestat.st_size;
             strncpy(lbuf, "Last-Modified: ", sizeof(lbuf));
             lbuf[sizeof(lbuf) -1] = '\0';
-            ctime_r(&ltimet, lbuf + strlen(lbuf));
-            lbuf[strlen(lbuf) - 1] = '\0';
+            const size_t LM_PREFIX_LEN = strlen(lbuf);
+            ci_to_strntime_rfc822(lbuf + LM_PREFIX_LEN, sizeof(lbuf) - LM_PREFIX_LEN, &filestat.st_mtime);
             ci_headers_add(headers, lbuf);
         }
 
