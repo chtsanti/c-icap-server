@@ -840,7 +840,7 @@ static int client_send_request_headers(ci_request_t * req, int has_eof, int time
         }
     }
 
-    static const size_t REQ_WBUF_SIZE = sizeof(((request_t *)0)->wbuf);
+    static const size_t REQ_WBUF_SIZE = sizeof(((ci_request_t *)0)->wbuf);
     if (req->preview > 0 && req->preview_data.used > 0) {
         bytes = snprintf(req->wbuf, REQ_WBUF_SIZE, "%x\r\n", req->preview);
         if (ci_writen(req->connection->fd, req->wbuf, bytes, timeout) < 0)
