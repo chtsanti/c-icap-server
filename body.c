@@ -138,7 +138,6 @@ struct ci_membuf *ci_membuf_from_content(char *buf, size_t buf_size, size_t cont
      b->readpos = 0;
      b->buf = buf;
      b->bufsize = buf_size;
-     b->unlocked = -1;
      b->attributes = NULL;
      return b;
 }
@@ -267,9 +266,6 @@ int ci_membuf_truncate(struct ci_membuf *body, int new_size)
 
     if (body->readpos > body->endpos)
         body->readpos = body->endpos;
-
-    if (body->unlocked > body->endpos)
-        body->unlocked = body->endpos;
 
     return 1;
 }

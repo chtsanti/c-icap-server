@@ -980,7 +980,7 @@ void free_data_type(ci_request_t *req,void *param){
 void *get_content_length(ci_request_t *req, char *param)
 {
     struct acl_cmp_uint64_data *clen_p = (struct acl_cmp_uint64_data *)ci_buffer_alloc(sizeof(struct acl_cmp_uint64_data));
-    clen_p->data = (uint64_t)ci_http_content_length(req);
+    clen_p->data = (uint64_t)ci_http_content_lenght(req);
     if (param[0] == '=') {
         clen_p->operator = 0;
     } else if (param[0] == '>') {

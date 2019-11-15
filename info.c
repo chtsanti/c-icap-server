@@ -282,16 +282,10 @@ struct stats_tmpl html_tmpl = {
   "<TABLE> <TR><TH>Child pids:</TH>",
   "<TD> %d</TD>",
   "</TR></TABLE>\n",
-<<<<<<< HEAD
   "<TABLE> <TR><TH>Closing childs pids:</TH>",
-  "<TR><TH>%s semaphores in use:</TH><TD>%s</TD>\n",
-  "<TR><TH>%s shared mem in use:</TH><TD>%s</TD>\n",
-=======
-  "<TABLE> <TR><TH>Closing children pids:</TH>",
   "<TABLE> <TR><TH>%s</TH></TR>\n",
   "<TR><TD>%s</TD></TR>\n",
   "</TABLE>\n",
->>>>>>> cefba57... Allow configuring interprocess locking and shared memory from c-icap.conf file
   "<TR><TH>%s:</TH><TD>  %lld</TD>\n",
   "<TR><TH>%s:</TH><TD>  %lld Kbs %d bytes</TD>\n"
 };

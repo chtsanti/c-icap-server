@@ -30,7 +30,6 @@
 #include "cfg_param.h"
 #include "commands.h"
 #include "acl.h"
-#include "txtTemplate.h"
 #include "proc_mutex.h"
 #include "registry.h"
 #include "shared_mem.h"
