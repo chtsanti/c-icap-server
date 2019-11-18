@@ -46,16 +46,16 @@ extern "C"
 #define CI_SOCKET_ERROR INVALID_SOCKET
 #endif
 
-typedef struct ci_sockaddr{
+typedef struct ci_sockaddr {
 #ifdef USE_IPV6
-     struct sockaddr_storage  sockaddr;
+    struct sockaddr_storage  sockaddr;
 #else
-     struct sockaddr_in   sockaddr;
+    struct sockaddr_in   sockaddr;
 #endif
-     int ci_sin_family;/* #define ci_sin_family sockaddr.sin_family */
-     int ci_sin_port;  /* #define ci_sin_port   sockaddr.sin_port   */
-     void *ci_sin_addr;
-     int ci_inaddr_len;
+    int ci_sin_family;/* #define ci_sin_family sockaddr.sin_family */
+    int ci_sin_port;  /* #define ci_sin_port   sockaddr.sin_port   */
+    void *ci_sin_addr;
+    int ci_inaddr_len;
 }  ci_sockaddr_t;
 
 
@@ -64,8 +64,8 @@ typedef struct ci_sockaddr{
 #ifdef USE_IPV6
 
 typedef union ci_inaddr {
-     struct in_addr ipv4_addr;
-     struct in6_addr ipv6_addr;
+    struct in_addr ipv4_addr;
+    struct in6_addr ipv6_addr;
 } ci_in_addr_t;
 
 #define ci_inaddr_zero(addr) (memset(&(addr),0,sizeof(ci_in_addr_t)))
@@ -73,9 +73,9 @@ typedef union ci_inaddr {
 #define ci_ipv4_inaddr_hostnetmask(addr)((addr).ipv4_addr.s_addr=htonl(0xFFFFFFFF))
 #define ci_in6_addr_u32(addr) ((uint32_t *)&((addr).ipv6_addr))
 #define ci_ipv6_inaddr_hostnetmask(addr)(ci_in6_addr_u32(addr)[0]=htonl(0xFFFFFFFF),\
-					 ci_in6_addr_u32(addr)[1]=htonl(0xFFFFFFFF), \
-					 ci_in6_addr_u32(addr)[2]=htonl(0xFFFFFFFF), \
-					 ci_in6_addr_u32(addr)[3]=htonl(0xFFFFFFFF))
+                     ci_in6_addr_u32(addr)[1]=htonl(0xFFFFFFFF), \
+                     ci_in6_addr_u32(addr)[2]=htonl(0xFFFFFFFF), \
+                     ci_in6_addr_u32(addr)[3]=htonl(0xFFFFFFFF))
 
 #define CI_IPLEN      46
 #define CI_SOCKADDR_SIZE sizeof(struct sockaddr_storage)
@@ -94,7 +94,7 @@ typedef struct in_addr ci_in_addr_t;
 
 #define wait_for_read       0x1
 #define wait_for_write      0x2
-#define wait_for_readwrite  0x3 
+#define wait_for_readwrite  0x3
 
 
 typedef struct ci_ip {
@@ -103,10 +103,10 @@ typedef struct ci_ip {
     int family;
 } ci_ip_t;
 
-typedef struct ci_connection{
-     ci_socket fd;
-     ci_sockaddr_t claddr;
-     ci_sockaddr_t srvaddr;
+typedef struct ci_connection {
+    ci_socket fd;
+    ci_sockaddr_t claddr;
+    ci_sockaddr_t srvaddr;
 }  ci_connection_t ;
 
 

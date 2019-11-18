@@ -38,32 +38,32 @@ struct ci_magics_db;
 
 /**
  * This struct holds the basic configurations of c-icap server. It passed as
- * argument to services and modules inititalization functions 
+ * argument to services and modules inititalization functions
  \ingroup CONFIG
  *
  * Do not use directly this struct but better use the documended macros and
  * functions.
  */
-struct ci_server_conf{
-     int  PORT;
-     int  PROTOCOL_FAMILY;
-     char *TMPDIR;
-     char *PIDFILE;
-     char *COMMANDS_SOCKET;
-     char *RUN_USER;
-     char *RUN_GROUP;
-     char *cfg_file;
-     char *magics_file;
-     struct ci_magics_db *MAGIC_DB;   
-     char *SERVICES_DIR;
-     char *MODULES_DIR;
-     char *SERVER_ADMIN;
-     char *SERVER_NAME;
-     int START_SERVERS;
-     int MAX_SERVERS;
-     int THREADS_PER_CHILD;
-     int MIN_SPARE_THREADS;
-     int MAX_SPARE_THREADS;
+struct ci_server_conf {
+    int  PORT;
+    int  PROTOCOL_FAMILY;
+    char *TMPDIR;
+    char *PIDFILE;
+    char *COMMANDS_SOCKET;
+    char *RUN_USER;
+    char *RUN_GROUP;
+    char *cfg_file;
+    char *magics_file;
+    struct ci_magics_db *MAGIC_DB;
+    char *SERVICES_DIR;
+    char *MODULES_DIR;
+    char *SERVER_ADMIN;
+    char *SERVER_NAME;
+    int START_SERVERS;
+    int MAX_SERVERS;
+    int THREADS_PER_CHILD;
+    int MIN_SPARE_THREADS;
+    int MAX_SPARE_THREADS;
 };
 
 /**
@@ -84,11 +84,11 @@ struct ci_server_conf{
  * integer variable can be set from the c-icap configuration file using the
  * directive "AService.Aparameter"
  */
-struct ci_conf_entry{
+struct ci_conf_entry {
     /**
      * The configuration directive
      */
-     const char *name;
+    const char *name;
     /**
      * A pointer to the configuration data
      */
@@ -103,28 +103,28 @@ struct ci_conf_entry{
      *      c-icap server
      \return Non zero on success, zero otherwise
      */
-     int (*action)(const char *name, const char **argv,void *setdata);
+    int (*action)(const char *name, const char **argv,void *setdata);
     /**
      * A description message
      */
-     const char *msg;
+    const char *msg;
 };
 
 /* Command line options implementation structure */
-struct ci_options_entry{
-     const char *name;
-     const char *parameter;
-     void *data;
-     int (*action)(const char *name, const char **argv,void *setdata);
-     const char *msg;
+struct ci_options_entry {
+    const char *name;
+    const char *parameter;
+    void *data;
+    int (*action)(const char *name, const char **argv,void *setdata);
+    const char *msg;
 };
 
 /*Struct for storing default parameter values*/
-struct cfg_default_value{
-     void *param;
-     void *value;
-     int size;
-     struct cfg_default_value *next;
+struct cfg_default_value {
+    void *param;
+    void *value;
+    int size;
+    struct cfg_default_value *next;
 };
 
 #define MAIN_TABLE 1
@@ -188,7 +188,7 @@ CI_DECLARE_FUNC(int) ci_cfg_disable(const char *directive,const char **argv,void
 /**
  * Can used with configuration parameters which does not takes arguments but
  * when defined just enable a feature.
- * The setdata is a pointer to an int which is set to non zero. 
+ * The setdata is a pointer to an int which is set to non zero.
  \ingroup CONFIG
  */
 CI_DECLARE_FUNC(int) ci_cfg_enable(const char *directive,const char **argv,void *setdata);
