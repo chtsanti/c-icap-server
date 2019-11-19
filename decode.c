@@ -342,8 +342,8 @@ do_mem_inflate_retry:
     inflateEnd(&strm);
     /*
       ret == Z_STREAM_END means that the decompression was succesfull
-      else the output data are corrupted or not produced at all. 
-      Example case is when the input data are not enough to produce 
+      else the output data are corrupted or not produced at all.
+      Example case is when the input data are not enough to produce
       a single byte of decompressed data, so the inflate() return Z_OK
       (eg during preview request with few preview data)
      */
