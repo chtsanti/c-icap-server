@@ -32,6 +32,7 @@
 #include "acl.h"
 #include "proc_threads_queues.h"
 #include <errno.h>
+#include <assert.h>
 
 logger_module_t *default_logger = NULL;
 
