@@ -22,34 +22,55 @@
 #include "debug.h"
 #include "dlib.h"
 
+static int isAbsolutePath(const char *file)
+{
+    return file[0] != '\0' && file[1] == ':' && file[2] == '\\';
+}
 
 HMODULE ci_module_load(const char *module_file, const char *default_path)
 {
     HMODULE handle;
     char path[CI_MAX_PATH];
     int requiredLen;
-    DWORD load_flags = LOAD_WITH_ALTERED_SEARCH_PATH;
+    DWORD load_flags;
 
-    if (module_file[0] != '/' && default_path) {
-        requiredLen = snprintf(path, CI_MAX_PATH, "%s/%s", default_path, module_file);
-    } else {
-        if (module_file[0] != '/')
-            load_flags = LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
+    /*Probably we should use SetDefaultDllDirectories or AddDllDirectory
+      win32 API functions, and do not prepend default modules path to the
+      module filename.
+     */
+
+    if (!isAbsolutePath(module_file) && default_path)
+        requiredLen = snprintf(path, sizeof(path), "%s\\%s", default_path, module_file);
+    else
         requiredLen = snprintf(path, sizeof(path), "%s", module_file);
-    }
 
-    if (requiredLen >= CI_MAX_PATH) {
-        ci_debug_printf(1, "Error: too long filename, truncated to '%s'\n", path);
+    if (requiredLen >= sizeof(path)) {
+        ci_debug_printf(1, "Error: to long path name, truncated to '%s'\n", path);
         return NULL;
     }
 
-    handle = LoadLibraryEx(path, NULL, load_flags);
-    if (!handle)
-        handle = LoadLibraryEx(path, NULL, 0);
+    if (isAbsolutePath(path))
+        load_flags = LOAD_WITH_ALTERED_SEARCH_PATH;
+    else
+        load_flags = LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
 
-    if (!handle) {
-        ci_debug_printf(1, "Error loading module %s:%lu\n", module_file,
-                        GetLastError());
+    if (!(handle = LoadLibraryEx(path, NULL, load_flags))) {
+        LPTSTR lpStrMsg;
+        DWORD err = GetLastError();
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                      FORMAT_MESSAGE_FROM_SYSTEM |
+                      FORMAT_MESSAGE_IGNORE_INSERTS,
+                      NULL,
+                      err,
+                      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                      (LPTSTR) &lpStrMsg,
+                      0, NULL );
+
+        ci_debug_printf(1, "Error loading module %s:%s:%lu:%s\n",
+                        module_file,
+                        path,
+                        err, lpStrMsg);
+        LocalFree(lpStrMsg);
         return NULL;
     }
     return handle;
