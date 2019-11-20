@@ -20,7 +20,7 @@
 //#include "common.h"
 //#include "c-icap.h"
 #include <stdio.h>
-#include <w32api/windows.h>
+#include <windows.h>
 
 char *logformat_fmt(const char *name)
 {
