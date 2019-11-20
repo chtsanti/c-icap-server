@@ -34,6 +34,7 @@
 #else
 //#include <WinSock2.h>
 #include <winsock2.h>
+#include <in6addr.h>
 #endif
 
 #ifdef __cplusplus
@@ -103,6 +104,7 @@ typedef struct in_addr ci_in_addr_t;
 #define ci_wait_for_write      0x2
 #define ci_wait_for_readwrite  0x3
 #define ci_wait_should_retry   0x4
+#define ci_wait_for_exceptions 0x8
 
 
 typedef struct ci_ip {
