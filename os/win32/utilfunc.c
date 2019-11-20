@@ -48,6 +48,15 @@ int strcasecmp(const char *s1, const char *s2)
     return r;
 }
 
+char * ctime_r(const time_t *t, char *buf)
+{
+    errno_t err = ctime_s(buf, 26, t);
+    if (err == 0)
+        return buf;
+    buf[0] = '\0';
+    return NULL;
+}
+
 /*
   The following functions are safe because the localtime and gmtime are thread
   safe in Win32
@@ -128,74 +137,16 @@ int ci_mktemp_file(char *dir, char *template, char *filename)
     return fd;
 }
 
+char * ci_strerror(int error, char *buf, size_t buflen)
+{
+    if (strerror_s(buf, buflen, error) == 0) {
+        return buf;
+    } else {
+	snprintf(buf, buflen, "%d", error);
+	return buf;
+    }
+}
 
 #ifndef offsetof
 #define offsetof(type,field) ((int) ( (char *)&((type *)0)->field))
 #endif                          /*  */
-/*
-static const unsigned char at_data[] = {
-    'S', 'u', 'n', 'M', 'o', 'n', 'T', 'u', 'e', 'W', 'e', 'd',
-    'T', 'h', 'u', 'F', 'r', 'i', 'S', 'a', 't',
-
-    'J', 'a', 'n', 'F', 'e', 'b', 'M', 'a', 'r', 'A', 'p', 'r',
-    'M', 'a', 'y', 'J', 'u', 'n', 'J', 'u', 'l', 'A', 'u', 'g',
-    'S', 'e', 'p', 'O', 'c', 't', 'N', 'o', 'v', 'D', 'e', 'c',
-    '?', '?', '?',
-    ' ', '?', '?', '?',
-    ' ', '0',
-    offsetof(struct tm, tm_mday),
-    ' ', '0',
-    offsetof(struct tm, tm_hour),
-    ':', '0',
-    offsetof(struct tm, tm_min),
-    ':', '0',
-    offsetof(struct tm, tm_sec),
-    ' ', '?', '?', '?', '?', '\n', 0
-};
-*/
-/*
-char *asctime_r(const struct tm *ptm, char *buffer)
-{
-    int tmp;
-    assert(ptm);
-    assert(buffer);
-    memcpy(buffer, at_data + 3*(7 + 12), sizeof(at_data) - 3*(7 + 12));
-    if (((unsigned int)(ptm->tm_wday)) <= 6) {
-         memcpy(buffer, at_data + 3 * ptm->tm_wday, 3);
-    }
-
-    if (((unsigned int)(ptm->tm_mon)) <= 11) {
-         memcpy(buffer + 4, at_data + 3*7 + 3 * ptm->tm_mon, 3);
-    }
-
-    buffer += 19;
-    tmp = ptm->tm_year + 1900;
-    if (((unsigned int) tmp) < 10000) {
-         buffer += 4;
-         do {
-          *buffer = '0' + (tmp % 10);
-          tmp /= 10;
-         } while (*--buffer == '?');
-    }
-
-    do {
-         --buffer;
-         tmp = *((int *)(((const char *) ptm) + (int) *buffer));
-
-         if (((unsigned int) tmp) >= 100) {
-          buffer[-1] = *buffer = '?';
-         } else
-         {
-          *buffer = '0' + (tmp % 10);
-
-          buffer[-1] += (tmp/10);
-         }
-    } while ((buffer -= 2)[-2] == '0');
-
-    if (*++buffer == '0') {
-         *buffer = ' ';
-    }
-
-    return buffer - 8;
-}
-*/
