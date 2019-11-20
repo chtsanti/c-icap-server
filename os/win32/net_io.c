@@ -17,14 +17,15 @@
  *  MA  02110-1301  USA.
  */
 
-
+#include "common.h"
 #include "c-icap.h"
-#include <errno.h>
 #include "debug.h"
 #include "net_io.h"
 #include "port.h"
 #include "cfg_param.h"
 
+#include <errno.h>
+#include <ws2tcpip.h>
 
 int icap_socket_opts(ci_socket fd, int secs_to_linger);
 
@@ -177,7 +178,7 @@ int ci_wait_for_data(ci_socket fd,int secs,int what_wait){
 
 int ci_wait_ms_for_data(ci_socket fd, int msecs, int what_wait)
 {
-    fd_set rfds, wfds, *preadfds, *pwritefds;
+    fd_set rfds, wfds, efds, *preadfds, *pwritefds, *pexceptfds;
     struct timeval tv;
     int ret = 0;
 
@@ -188,33 +189,57 @@ int ci_wait_ms_for_data(ci_socket fd, int msecs, int what_wait)
 
     preadfds = NULL;
     pwritefds = NULL;
+    pexceptfds = NULL;
 
-    if (what_wait & wait_for_read) {
+    if (what_wait & ci_wait_for_read) {
         FD_ZERO(&rfds);
         FD_SET(fd, &rfds);
         preadfds = &rfds;
     }
 
-    if (what_wait & wait_for_write) {
+    if (what_wait & ci_wait_for_write) {
         FD_ZERO(&wfds);
         FD_SET(fd, &wfds);
         pwritefds = &wfds;
     }
 
+    if (what_wait & ci_wait_for_exceptions) {
+        FD_ZERO(&efds);
+        FD_SET(fd, &efds);
+        pexceptfds = &efds;
+    }
+
     if ((ret =
-                select(fd + 1, preadfds, pwritefds, NULL,
+                select(fd + 1, preadfds, pwritefds, pexceptfds,
                        (msecs >= 0 ? &tv : NULL))) > 0) {
         ret = 0;
         if (preadfds && FD_ISSET(fd, preadfds))
-            ret = wait_for_read;
+            ret = ci_wait_for_read;
         if (pwritefds && FD_ISSET(fd, pwritefds))
-            ret = ret | wait_for_write;
+            ret = ret | ci_wait_for_write;
+	if (pexceptfds && FD_ISSET(fd, pexceptfds))
+            ret = ret | ci_wait_for_exceptions;
         return ret;
     }
 
     if (ret < 0) {
-        ci_debug_printf(5, "Fatal error while waiting for new data....\n");
-        return -1;
+        DWORD err = WSAGetLastError();
+	if (err == WSAEINTR)
+	    return ci_wait_should_retry;
+	else {
+	    LPTSTR lpStrMsg;
+	    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			  FORMAT_MESSAGE_FROM_SYSTEM |
+			  FORMAT_MESSAGE_IGNORE_INSERTS,
+			  NULL,
+			  err,
+			  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			  (LPTSTR) &lpStrMsg,
+			  0, NULL );
+            ci_debug_printf(5, "Fatal error while waiting for new data %d:%s\n", err, lpStrMsg);
+            LocalFree(lpStrMsg);
+            return -1;
+	}
     }
     return 0;
 }

@@ -440,7 +440,7 @@ ci_connection_t *ci_connect_ms_to_address(const ci_sockaddr_t *addr, int port, i
     }
 
     do {
-        ret = ci_wait_ms_for_data(connection->fd, msecs, ci_wait_for_write);
+        ret = ci_wait_ms_for_data(connection->fd, msecs, ci_wait_for_write | ci_wait_for_exceptions);
     } while (ret > 0 && (ret & ci_wait_should_retry)); //while iterrupted by signal
 
     if (ret <= 0) {
