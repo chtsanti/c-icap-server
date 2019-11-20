@@ -45,6 +45,7 @@ CI_DECLARE_FUNC(int)  ci_usleep(unsigned long usec);
 CI_DECLARE_FUNC(int) mkstemp(char *filename);
 CI_DECLARE_FUNC(struct tm*) localtime_r(const time_t *t, struct tm *tm);
 CI_DECLARE_FUNC(struct tm*) gmtime_r(const time_t *t, struct tm *tm);
+CI_DECLARE_FUNC(char *) ctime_r(const time_t *t, char *buf);
 #endif
 
 CI_DECLARE_FUNC(const char *) ci_strnstr(const char *s, const char *find, size_t slen);

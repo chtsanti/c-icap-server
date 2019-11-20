@@ -48,6 +48,15 @@ int strcasecmp(const char *s1, const char *s2)
     return r;
 }
 
+char * ctime_r(const time_t *t, char *buf)
+{
+    errno_t err = ctime_s(buf, 26, t);
+    if (err == 0)
+        return buf;
+    buf[0] = '\0';
+    return NULL;
+}
+
 /*
   The following functions are safe because the localtime and gmtime are thread
   safe in Win32
@@ -143,6 +152,15 @@ int ci_mktemp_file(char *dir, char *template, char *filename)
     return fd;
 }
 
+char * ci_strerror(int error, char *buf, size_t buflen)
+{
+    if (strerror_s(buf, buflen, error) == 0) {
+        return buf;
+    } else {
+	snprintf(buf, buflen, "%d", error);
+	return buf;
+    }
+}
 
 #ifndef offsetof
 #define offsetof(type,field) ((int) ( (char *)&((type *)0)->field))
