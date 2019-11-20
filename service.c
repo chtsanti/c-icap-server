@@ -629,7 +629,7 @@ void release_c_handler();
 
 service_handler_module_t c_service_handler = {
     "C_handler",
-    ".so,.sa,.a",
+    ".so,.sa,.a,.dll",
     NULL,                      /*init */
     NULL,                      /*post_init */
     release_c_handler,
