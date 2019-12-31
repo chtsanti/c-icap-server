@@ -34,6 +34,12 @@ AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
+# Swig/python checks
+AM_PATH_PYTHON(3)
+AX_PKG_SWIG
+AX_SWIG_ENABLE_CXX
+AX_SWIG_PYTHON
+
 dnl Define c-icap version
 C_ICAP_HEX_VERSION=`echo $PACKAGE_VERSION | $AWK -f $srcdir/build/c_icap_version.awk`
 AC_SUBST(C_ICAP_HEX_VERSION)
@@ -1012,8 +1018,10 @@ AM_CONDITIONAL(USELDAP, [test a"$libldap" != ano])
 AM_CONDITIONAL(USEMEMCACHED, [test a"$libmemcached" != ano])
 AM_CONDITIONAL(USE_RPATH, [test "a$enable_rpath" != "ano"])
 
+
 AC_OUTPUT([
 include/c-icap-conf.h Makefile utils/Makefile services/Makefile
 services/echo/Makefile services/ex-206/Makefile modules/Makefile tests/Makefile
+swig/Makefile swig/python/Makefile
 docs/Makefile docs/man/Makefile
 ])
