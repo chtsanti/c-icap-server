@@ -137,11 +137,11 @@ void ci_to_strntime_rfc822(char *buf, size_t size, const time_t *tm)
     FILETIME ft;
     ft.dwLowDateTime = (DWORD) ll;
     ft.dwHighDateTime = ll >>32;
-    SYSTEMTIME stm;
-    FileTimeToSystemTime(&ft, &stm);
+    SYSTEMTIME sysTm;
+    FileTimeToSystemTime(&ft, &sysTm);
     snprintf(buf, size, "%s, %0.2d %s %d %0.2d:%0.2d:%0.2d GMT",
-             days[stm.wDayOfWeek], stm.wDay, months[stm.wMonth], stm.wYear,
-             stm.wHour, stm.wMinute, stm.wSecond);
+             days[sysTm.wDayOfWeek], sysTm.wDay, months[sysTm.wMonth], sysTm.wYear,
+             sysTm.wHour, sysTm.wMinute, sysTm.wSecond);
 }
 
 int ci_mktemp_file(char *dir, char *template, char *filename)
