@@ -182,7 +182,7 @@ int ci_wait_ms_for_data(ci_socket fd, int msecs, int what_wait)
     struct timeval tv;
     int ret = 0;
 
-    if (secs >= 0) {
+    if (msecs >= 0) {
         tv.tv_sec = msecs / 1000;
         tv.tv_usec = (msecs % 1000) * 1000;
     }
@@ -211,7 +211,7 @@ int ci_wait_ms_for_data(ci_socket fd, int msecs, int what_wait)
 
     if ((ret =
                 select(fd + 1, preadfds, pwritefds, pexceptfds,
-                       (secs >= 0 ? &tv : NULL))) > 0) {
+                       (msecs >= 0 ? &tv : NULL))) > 0) {
         ret = 0;
         if (preadfds && FD_ISSET(fd, preadfds))
             ret = ci_wait_for_read;
