@@ -52,7 +52,7 @@ ci_thread_mutex_t counters_mtx;
 struct childs_queue *childs_queue = NULL;
 child_shared_data_t *child_data;
 struct connections_queue *con_queue;
-process_pid_t MY_PROC_PID = 0;
+DWORD MY_PROC_PID = 0;
 int CHILD_HALT = 0;
 
 /*Interprocess accepting mutex ....*/
@@ -309,7 +309,7 @@ int worker_main(ci_socket sockfd)
 void child_main(ci_socket sockfd)
 {
     ci_thread_t thread;
-    int i, retcode;
+    int i;
     char op;
     HANDLE hStdin;
     DWORD dwRead;
@@ -334,15 +334,15 @@ void child_main(ci_socket sockfd)
         if ((threads_list[i] = newthread(con_queue)) == NULL) {
             exit(-1);        // FATAL error.....
         }
-        retcode = ci_thread_create(&thread,
-                                   (void *(*)(void *)) thread_main,
-                                   (void *) threads_list[i]);
+        (void)ci_thread_create(&thread,
+                               (void *(*)(void *)) thread_main,
+                               (void *) threads_list[i]);
     }
     threads_list[CI_CONF.THREADS_PER_CHILD] = NULL;
     ci_debug_printf(1, "Threads created ....\n");
-    retcode = ci_thread_create(&worker_thread,
-                               (void *(*)(void *)) worker_main,
-                               (void *) (sockfd));
+    (void)ci_thread_create(&worker_thread,
+                           (void *(*)(void *)) worker_main,
+                           (void *) (sockfd));
 
 //Listen for events from main server better..............
 
@@ -666,7 +666,7 @@ int wait_achild_to_die()
                         died_child);
         ach = get_child_data(childs_queue, died_child);
         CloseHandle(ach->pipe);
-        remove_child(&childs_queue, died_child, 0);
+        remove_child(childs_queue, died_child, 0);
         CloseHandle(died_child);
         ci_thread_mutex_unlock(&control_process_mtx);
     }
@@ -709,7 +709,7 @@ int check_for_died_child(DWORD msecs)
                     died_child);
     ach = get_child_data(childs_queue, died_child);
     CloseHandle(ach->pipe);
-    remove_child(&childs_queue, died_child, 0);
+    remove_child(childs_queue, died_child, 0);
     CloseHandle(died_child);
     return 1;
 }
