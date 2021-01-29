@@ -17,8 +17,8 @@
  *  MA  02110-1301  USA.
  */
 
+#include "common.h"
 #include "ci_threads.h"
-#include <synchapi.h>
 
 int ci_thread_mutex_init(ci_thread_mutex_t * pmutex)
 {
@@ -29,18 +29,6 @@ int ci_thread_mutex_init(ci_thread_mutex_t * pmutex)
 int ci_thread_mutex_destroy(ci_thread_mutex_t * pmutex)
 {
     DeleteCriticalSection(pmutex);
-    return 0;
-}
-
-int ci_thread_mutex_lock(ci_thread_mutex_t * pmutex)
-{
-    EnterCriticalSection(pmutex);
-    return 0;
-}
-
-int ci_thread_mutex_unlock(ci_thread_mutex_t * pmutex)
-{
-    LeaveCriticalSection(pmutex);
     return 0;
 }
 
@@ -61,41 +49,6 @@ int ci_thread_cond_destroy(ci_thread_cond_t * pcond)
 #else
     CloseHandle(*pcond);
     *pcond = NULL;
-#endif
-    return 0;
-}
-
-int ci_thread_cond_wait(ci_thread_cond_t * pcond, ci_thread_mutex_t * pmutex)
-{
-#if 1
-    SleepConditionVariableCS(pcond, pmutex, INFINITE);
-#else
-    ci_thread_mutex_unlock(pmutex);
-    WaitForSingleObject(*pcond, INFINITE);
-    ci_thread_mutex_lock(pmutex);
-#endif
-    return 0;
-}
-
-int ci_thread_cond_broadcast(ci_thread_cond_t * pcond)
-{
-#if 1
-    WakeAllConditionVariable(pcond);
-#else
-    SetEvent(*pcond);          /*This do not work with autoreset events.
-                                   But now the ci_thread_cond_broadcast
-                                   not used by the c-icap server.
-                                   SS: This is wrong used by worker thread to kill childs..... */
-#endif
-    return 0;
-}
-
-int ci_thread_cond_signal(ci_thread_cond_t * pcond)
-{
-#if 1
-    WakeConditionVariable(pcond);
-#else
-    SetEvent(*pcond);
 #endif
     return 0;
 }
@@ -134,23 +87,5 @@ int ci_thread_rwlock_init(ci_thread_rwlock_t * rwlock)
 int ci_thread_rwlock_destroy(ci_thread_rwlock_t * rwlock)
 {
     DeleteCriticalSection(rwlock);
-    return 0;
-}
-
-int ci_thread_rwlock_rdlock(ci_thread_rwlock_t * rwlock)
-{
-    EnterCriticalSection(rwlock);
-    return 0;
-}
-
-int ci_thread_rwlock_wrlock(ci_thread_rwlock_t * rwlock)
-{
-    EnterCriticalSection(rwlock);
-    return 0;
-}
-
-int ci_thread_rwlock_unlock(ci_thread_rwlock_t * rwlock)
-{
-    LeaveCriticalSection(rwlock);
     return 0;
 }
