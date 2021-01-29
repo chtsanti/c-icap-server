@@ -125,33 +125,87 @@ CI_DECLARE_FUNC(int) ci_thread_join(ci_thread_t thread_id);
 #else /*ifdef _WIN32*/
 
 #include <windows.h>
+#include <synchapi.h>
 
-#define  ci_thread_mutex_t   CRITICAL_SECTION
-#define  ci_thread_rwlock_t  CRITICAL_SECTION
+typedef  CRITICAL_SECTION ci_thread_mutex_t;
+typedef  CRITICAL_SECTION ci_thread_rwlock_t; /*TODO: Replace with PSRWLOCK*/
 #if 1
-#define  ci_thread_cond_t    CONDITION_VARIABLE
+typedef CONDITION_VARIABLE ci_thread_cond_t;
 #else
-#define  ci_thread_cond_t    HANDLE
+typedef  HANDLE ci_thread_cond_t;
 #endif
-#define  ci_thread_t         HANDLE
+typedef HANDLE  ci_thread_t;
 
 CI_DECLARE_FUNC(int)  ci_thread_mutex_init(ci_thread_mutex_t *pmutex);
 CI_DECLARE_FUNC(int) ci_thread_mutex_destroy(ci_thread_mutex_t *pmutex);
-CI_DECLARE_FUNC(int) ci_thread_mutex_lock(ci_thread_mutex_t *pmutex);
-CI_DECLARE_FUNC(int) ci_thread_mutex_unlock(ci_thread_mutex_t *pmutex);
+
+static inline int ci_thread_mutex_lock(ci_thread_mutex_t * pmutex)
+{
+    EnterCriticalSection(pmutex);
+    return 0;
+}
+
+static inline int ci_thread_mutex_unlock(ci_thread_mutex_t * pmutex)
+{
+    LeaveCriticalSection(pmutex);
+    return 0;
+}
 
 CI_DECLARE_FUNC(int) ci_thread_rwlock_init(ci_thread_rwlock_t *);
 CI_DECLARE_FUNC(int) ci_thread_rwlock_destroy(ci_thread_rwlock_t *);
-CI_DECLARE_FUNC(int) ci_thread_rwlock_rdlock(ci_thread_rwlock_t *);
-CI_DECLARE_FUNC(int) ci_thread_rwlock_wrlock(ci_thread_rwlock_t *);
-CI_DECLARE_FUNC(int) ci_thread_rwlock_unlock(ci_thread_rwlock_t *);
+
+static inline int ci_thread_rwlock_rdlock(ci_thread_rwlock_t * rwlock)
+{
+    EnterCriticalSection(rwlock);
+    return 0;
+}
+
+static inline int ci_thread_rwlock_wrlock(ci_thread_rwlock_t * rwlock)
+{
+    EnterCriticalSection(rwlock);
+    return 0;
+}
+
+static inline int ci_thread_rwlock_unlock(ci_thread_rwlock_t * rwlock)
+{
+    LeaveCriticalSection(rwlock);
+    return 0;
+}
 
 CI_DECLARE_FUNC(int)  ci_thread_cond_init(ci_thread_cond_t *pcond);
 CI_DECLARE_FUNC(int) ci_thread_cond_destroy(ci_thread_cond_t *pcond);
-CI_DECLARE_FUNC(int) ci_thread_cond_wait(ci_thread_cond_t *pcond,ci_thread_mutex_t *pmutex);
-CI_DECLARE_FUNC(int)  ci_thread_cond_broadcast(ci_thread_cond_t *pcond);
-CI_DECLARE_FUNC(int) ci_thread_cond_signal(ci_thread_cond_t *pcond);
 
+static inline int ci_thread_cond_wait(ci_thread_cond_t * pcond, ci_thread_mutex_t * pmutex)
+{
+#if 1
+    SleepConditionVariableCS(pcond, pmutex, INFINITE);
+#else
+    ci_thread_mutex_unlock(pmutex);
+    WaitForSingleObject(*pcond, INFINITE);
+    ci_thread_mutex_lock(pmutex);
+#endif
+    return 0;
+}
+
+static inline int ci_thread_cond_broadcast(ci_thread_cond_t * pcond)
+{
+#if 1
+    WakeAllConditionVariable(pcond);
+#else
+    SetEvent(*pcond);  /* This does not work with autoreset events */
+#endif
+    return 0;
+}
+
+static inline int ci_thread_cond_signal(ci_thread_cond_t * pcond)
+{
+#if 1
+    WakeConditionVariable(pcond);
+#else
+    SetEvent(*pcond);
+#endif
+    return 0;
+}
 
 CI_DECLARE_FUNC(int) ci_thread_create(ci_thread_t *thread_id, void *(*pfunc)(void *), void *parg);
 CI_DECLARE_FUNC(int) ci_thread_join(ci_thread_t thread_id);
