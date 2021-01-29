@@ -96,7 +96,7 @@ libicapapi_la_CFLAGS= $(INVISIBILITY_CFLAG) -I$(srcdir)/include/ -Iinclude/ @ZLI
 libicapapi_la_LIBADD = @ZLIB_ADD_LDADD@ @BZLIB_ADD_LDADD@ @BROTLI_ADD_LDADD@ @ZSTD_ADD_LDADD@ $(UTIL_LDADD) @DL_ADD_FLAG@ @THREADS_LDADD@ @OPENSSL_ADD_LDADD@
 libicapapi_la_LDFLAGS= -shared -version-info @CICAPLIB_VERSION@ @LIBS_LDFLAGS@ @THREADS_LDFLAGS@
 
-if ISCYGWIN
+if IS_WINDOWS_BUILD
 libcicap_la_CFLAGS =  $(INVISIBILITY_CFLAG) -I$(srcdir)/include/ -Iinclude/  -DCI_BUILD_LIB
 
 libcicap_la_LIBADD =

@@ -114,9 +114,12 @@ case "$host_os" in
 
       *mingw32*)
         iswin32="yes"
-        CFLAGS="-std=c99 -D_REENTRANT $CFLAGS"
-        LDFLAGS="-no-undefined"
+        CFLAGS="-D_REENTRANT $CFLAGS"
+        LIBS_LDFLAGS="-no-undefined"
         LIBS="-lws2_32"
+        # Pre-set the following, it does not work on MS-Windows
+        ac_cv_fcntl=no
+        ac_cv_10031b_ipc_sem=no
       ;;
 
       *)
