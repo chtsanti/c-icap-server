@@ -797,7 +797,11 @@ int start_server()
     child_data->usedservers = 0;
     child_data->requests = 0;
     child_data->to_be_killed = 0;
+    child_data->father_said = 0;
     child_data->idle = 1;
+    child_data->stats_size = ci_stat_memblock_size();
+    child_data->stats = malloc(child_data->stats_size);
+    assert(child_data->stats != NULL);
     child_main(LISTEN_SOCKET);
 #endif
 

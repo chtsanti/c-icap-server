@@ -124,7 +124,7 @@ void ci_strntime_rfc822(char *buf, size_t size)
     assert(size > 0);
     SYSTEMTIME tm;
     GetLocalTime(&tm);         /*Here we need GMT time not localtime! */
-    snprintf(buf, size, "%s, %0.2d %s %d %0.2d:%0.2d:%0.2d GMT",
+    snprintf(buf, size, "%s, %.2d %s %d %.2d:%.2d:%.2d GMT",
              days[tm.wDayOfWeek], tm.wDay, months[tm.wMonth], tm.wYear,
              tm.wHour, tm.wMinute, tm.wSecond);
 }
@@ -139,7 +139,7 @@ void ci_to_strntime_rfc822(char *buf, size_t size, const time_t *tm)
     ft.dwHighDateTime = ll >>32;
     SYSTEMTIME sysTm;
     FileTimeToSystemTime(&ft, &sysTm);
-    snprintf(buf, size, "%s, %0.2d %s %d %0.2d:%0.2d:%0.2d GMT",
+    snprintf(buf, size, "%s, %.2d %s %d %.2d:%.2d:%.2d GMT",
              days[sysTm.wDayOfWeek], sysTm.wDay, months[sysTm.wMonth], sysTm.wYear,
              sysTm.wHour, sysTm.wMinute, sysTm.wSecond);
 }
