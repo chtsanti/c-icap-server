@@ -17,6 +17,10 @@
  *  MA  02110-1301  USA.
  */
 
+#if defined(_WIN32)
+#define _CRT_RAND_S
+#endif
+
 #include "common.h"
 #include "c-icap.h"
 #include "request.h"
@@ -194,6 +198,21 @@ static void str_trim(char *str)
     while (*(--e) == ' ' && e >= str) *e = '\0';
 }
 
+static int get_rand_0_x(unsigned int *seed, int x)
+{
+    unsigned int arand = 0;
+    double MAX =1;
+#if !defined(_WIN32)
+    arand = rand_r(seed);
+    MAX= (double)RAND_MAX;
+#else
+    rand_s(&arand);
+    MAX = (double)UINT_MAX;
+#endif
+    int random_x = (int) ((((double) arand) / MAX) * (double)x);
+    return random_x;
+}
+
 static int load_urls(char *filename)
 {
     FILE *f;
@@ -252,8 +271,7 @@ static char *xclient_header(struct thread_data *data)
     if (!xclient_headers_num)
         return NULL;
 
-    int arand = rand_r(&(data->rand_seed));
-    int indx = (int) ((((double) arand) / (double) RAND_MAX) * (double)xclient_headers_num);
+    int indx = get_rand_0_x(&(data->rand_seed), xclient_headers_num);
     return xclient_headers[indx];
 }
 
@@ -437,7 +455,7 @@ static int threadjobreqmod(void *data)
     ci_connection_t *conn;
     char *xh;
     int indx, keepalive, ret;
-    int arand = 0, p;
+    int p;
     struct thread_data *thread_data = (struct thread_data *)data;
     time_t start;
     time(&start);
@@ -463,8 +481,7 @@ static int threadjobreqmod(void *data)
                 ci_icap_append_xheaders(req, xheaders);
 
             keepalive = 0;
-            arand = rand_r(&(thread_data->rand_seed));
-            indx = (int) ((((double) arand) / (double) RAND_MAX) * (double)URLS_COUNT);
+            indx = get_rand_0_x(&(thread_data->rand_seed), URLS_COUNT);
             if ((ret = do_req(req, URLS[indx], &keepalive, DoTransparent)) <= 0) {
                 if (ret == 0)
                     ci_stat_uint64_inc(soft_failed_requests_stats, 1);
@@ -486,8 +503,7 @@ static int threadjobreqmod(void *data)
             if (keepalive == 0)
                 break;
 
-            arand = rand_r(&(thread_data->rand_seed));
-            p = (int) ((((double) arand) / (double) RAND_MAX) * 10.0);
+            p = get_rand_0_x(&(thread_data->rand_seed), 10);
             if (p == 5 || p == 7 || p == 3) {    // 30% possibility ....
                 //                  printf("OK, closing the connection......\n");
                 break;
@@ -560,7 +576,7 @@ static int store_meta(uint64_t reqId, ci_request_t *req, ci_headers_list_t *requ
 static int do_file(struct thread_data *data, ci_request_t *req, uint64_t reqId, char *input_file, int *keepalive)
 {
     int fd_in,fd_out;
-    int ret, arand;
+    int ret;
     int indx;
     ci_headers_list_t *headers, *request_headers = NULL;
     const char *useUrl = NULL;
@@ -570,9 +586,7 @@ static int do_file(struct thread_data *data, ci_request_t *req, uint64_t reqId, 
         snprintf(buf, sizeof(buf), "%s%s%s", BASE_URL, input_file[0] != '/' ? "/" : "" ,input_file);
         useUrl = buf;
     } else if (URLS_COUNT > 0) {
-        arand = rand_r(&(data->rand_seed));
-
-        indx = (int) ((((double) arand) / (double) RAND_MAX) * (double)URLS_COUNT);
+        indx = get_rand_0_x(&(data->rand_seed), URLS_COUNT);
         useUrl = URLS[indx];
     } else {
         snprintf(buf, sizeof(buf), "file://%s", input_file);
@@ -697,8 +711,7 @@ static int threadjobsendfiles(void *data)
             if (keepalive == 0)
                 break;
 
-            arand = rand_r(&(thread_data->rand_seed));
-            arand = (int) ((((double) arand) / (double) RAND_MAX) * 10.0);
+            arand = get_rand_0_x(&(thread_data->rand_seed), 10);
             if (arand == 5 || arand == 7 || arand == 3) {    // 30% possibility ....
 //                  printf("OK, closing the connection......\n");
                 break;
