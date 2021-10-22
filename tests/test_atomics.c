@@ -3,6 +3,7 @@
 #include "atomic.h"
 #include "cfg_param.h"
 #include "ci_threads.h"
+#include "ci_time.h"
 #include "debug.h"
 
 ci_thread_cond_t CND;
@@ -26,11 +27,9 @@ int LOOPS = 10000;
 int THREADS = 100;
 int USE_DEBUG_LEVEL = -1;
 
-#define CLOCK_TIME_DIFF_micro(tsstop, tsstart) ((tsstop.tv_sec - tsstart.tv_sec) * 1000000) + ((tsstop.tv_nsec - tsstart.tv_nsec) / 1000)
-
 int run_thread()
 {
-    struct timespec start, stop;
+    ci_clock_time_t start, stop;
     uint64_t tt;
     int i;
 
@@ -38,12 +37,12 @@ int run_thread()
     ci_thread_cond_wait(&CND, &CNDMTX);
     ci_thread_mutex_unlock(&CNDMTX);
 
-    clock_gettime (CLOCK_REALTIME, &start);
+    ci_clock_time_get(&start);
     for(i = 0; i < LOOPS; i++) {
         ci_atomic_add_u64(&at_c, 1);
     }
-    clock_gettime (CLOCK_REALTIME, &stop);
-    tt = CLOCK_TIME_DIFF_micro(stop, start);
+    ci_clock_time_get(&stop);
+    tt = ci_clock_time_diff_micro(&stop, &start);
     ci_thread_mutex_lock(&statsMTX);
     spent_time += tt;
     ci_thread_mutex_unlock(&statsMTX);
@@ -53,12 +52,12 @@ int run_thread()
     ci_thread_cond_wait(&CND, &CNDMTX);
     ci_thread_mutex_unlock(&CNDMTX);
 
-    clock_gettime (CLOCK_REALTIME, &start);
+    ci_clock_time_get(&start);
     for(i = 0; i < LOOPS; i++) {
         ci_atomic_add_u64_non_inline(&ni_at_c, 1);
     }
-    clock_gettime (CLOCK_REALTIME, &stop);
-    tt = CLOCK_TIME_DIFF_micro(stop, start);
+    ci_clock_time_get(&stop);
+    tt = ci_clock_time_diff_micro(&stop, &start);
     ci_thread_mutex_lock(&statsMTX);
     ni_spent_time += tt;
     ci_thread_mutex_unlock(&statsMTX);
@@ -68,12 +67,12 @@ int run_thread()
     ci_thread_cond_wait(&CND, &CNDMTX);
     ci_thread_mutex_unlock(&CNDMTX);
 
-    clock_gettime (CLOCK_REALTIME, &start);
+    ci_clock_time_get(&start);
     for(i = 0; i < LOOPS; i++) {
         ci_atomic_add_u64_non_inline_gl(&ni_at_c_gl, 1);
     }
-    clock_gettime (CLOCK_REALTIME, &stop);
-    tt = CLOCK_TIME_DIFF_micro(stop, start);
+    ci_clock_time_get(&stop);
+    tt = ci_clock_time_diff_micro(&stop, &start);
     ci_thread_mutex_lock(&statsMTX);
     ni_spent_time_gl += tt;
     ci_thread_mutex_unlock(&statsMTX);
@@ -83,14 +82,14 @@ int run_thread()
     ci_thread_cond_wait(&CND, &CNDMTX);
     ci_thread_mutex_unlock(&CNDMTX);
 
-    clock_gettime (CLOCK_REALTIME, &start);
+    ci_clock_time_get(&start);
     for(i = 0; i < LOOPS; i++) {
         ci_thread_mutex_lock(&counterMTX);
         simple_c++;
         ci_thread_mutex_unlock(&counterMTX);
     }
-    clock_gettime (CLOCK_REALTIME, &stop);
-    tt = CLOCK_TIME_DIFF_micro(stop, start);
+    ci_clock_time_get(&stop);
+    tt = ci_clock_time_diff_micro(&stop, &start);
     ci_thread_mutex_lock(&statsMTX);
     simple_spent_time += tt;
     ci_thread_mutex_unlock(&statsMTX);
