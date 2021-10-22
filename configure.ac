@@ -1237,6 +1237,7 @@ AC_MSG_RESULT(yes)
 AC_MSG_RESULT(no)
 )
 
+if test "a$iswin32" == "a"; then
 AC_MSG_CHECKING([if have 128bit atomics])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 [[
@@ -1253,8 +1254,10 @@ AC_MSG_RESULT(yes)
 ],
 AC_MSG_RESULT(no)
 )
+fi
 
-if test a"$C11_ATOMICS" = "a1"; then
+#mingw32 has issues when building DLL with atomics library
+if test a"$C11_ATOMICS" = "a1" -a "a$iswin32" == "a"; then
    # We can not safely use AC_CHECK_LIB for libatomic:
    # This library may implement zero or all of the
    # atomic_* operators/functions depending the
