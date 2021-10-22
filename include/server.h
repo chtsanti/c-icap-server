@@ -21,6 +21,7 @@
 #ifndef __C_ICAP_SERVER_H
 #define __C_ICAP_SERVER_H
 
+#include "c-icap.h"
 #include "stats.h"
 
 #ifdef __cplusplus
@@ -82,28 +83,28 @@ static inline uint64_t ci_server_stat_uint64_get(int id)
  * running children.
  \ingroup SERVER_STATS
  */
-CI_DECLARE_FUNC(ci_kbs_t) ci_server_stat_kbs_get_running(int id);
+CI_DECL_PROCESS_FUNC(ci_kbs_t) ci_server_stat_kbs_get_running(int id);
 
 /**
  * Retrieves the value of an integer statistic entry for the
  * running children.
  \ingroup SERVER_STATS
  */
-CI_DECLARE_FUNC(uint64_t) ci_server_stat_uint64_get_running(int id);
+CI_DECL_PROCESS_FUNC(uint64_t) ci_server_stat_uint64_get_running(int id);
 
 /**
  * Retrieves the value of a counter of type CI_STAT_KBS_T for the
  * c-icap server. The returned value includes history statistic data.
  \ingroup SERVER_STATS
  */
-CI_DECLARE_FUNC(ci_kbs_t) ci_server_stat_kbs_get_global(int id);
+CI_DECL_PROCESS_FUNC(ci_kbs_t) ci_server_stat_kbs_get_global(int id);
 
 /**
  * Retrieves the value of an integer statistic entry for the
  * c-icap server. The returned value includes history statistic data.
  \ingroup SERVER_STATS
  */
-CI_DECLARE_FUNC(uint64_t) ci_server_stat_uint64_get_global(int id);
+CI_DECL_PROCESS_FUNC(uint64_t) ci_server_stat_uint64_get_global(int id);
 
 /**
  * Retrieves all c-icap server statistics into a ci_stat_memblock_t object.
@@ -157,7 +158,7 @@ const ci_stat_memblock_t *ci_server_stat_get_history_stats(uint32_t flags);
  \param size The desired size of the memblob
  \return An identifier to use to access the memory block
 */
-CI_DECLARE_FUNC(int) ci_server_shared_memblob_register(const char *name, size_t size);
+CI_DECL_PROCESS_FUNC(int) ci_server_shared_memblob_register(const char *name, size_t size);
 
 /**
  *
@@ -165,7 +166,7 @@ CI_DECLARE_FUNC(int) ci_server_shared_memblob_register(const char *name, size_t 
  \param ID the memblob ID, returned by a ci_server_shared_memblob_register call
  \ingroup SERVER_MEMBLOB
 */
-CI_DECLARE_FUNC(void *) ci_server_shared_memblob(int ID);
+CI_DECL_PROCESS_FUNC(void *) ci_server_shared_memblob(int ID);
 
 /**
  *
@@ -173,7 +174,7 @@ CI_DECLARE_FUNC(void *) ci_server_shared_memblob(int ID);
  \param name The name used to register/request the memory block.
  \ingroup SERVER_MEMBLOB
  */
-CI_DECLARE_FUNC(void *) ci_server_shared_memblob_byname(const char *name);
+CI_DECL_PROCESS_FUNC(void *) ci_server_shared_memblob_byname(const char *name);
 
 
 #ifdef __cplusplus
