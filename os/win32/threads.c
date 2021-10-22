@@ -89,3 +89,35 @@ int ci_thread_rwlock_destroy(ci_thread_rwlock_t * rwlock)
     DeleteCriticalSection(rwlock);
     return 0;
 }
+
+int ci_thread_cond_wait(ci_thread_cond_t * pcond, ci_thread_mutex_t * pmutex)
+{
+#if 1
+    SleepConditionVariableCS(pcond, pmutex, INFINITE);
+#else
+    ci_thread_mutex_unlock(pmutex);
+    WaitForSingleObject(*pcond, INFINITE);
+    ci_thread_mutex_lock(pmutex);
+#endif
+    return 0;
+}
+
+int ci_thread_cond_broadcast(ci_thread_cond_t * pcond)
+{
+#if 1
+    WakeAllConditionVariable(pcond);
+#else
+    SetEvent(*pcond);  /* This does not work with autoreset events */
+#endif
+    return 0;
+}
+
+int ci_thread_cond_signal(ci_thread_cond_t * pcond)
+{
+#if 1
+    WakeConditionVariable(pcond);
+#else
+    SetEvent(*pcond);
+#endif
+    return 0;
+}
