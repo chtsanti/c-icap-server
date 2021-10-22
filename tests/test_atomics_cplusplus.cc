@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
     delete threads;
 
-    ci_debug_printf(1, "Atomic add result : %lu\n", at_c)
+    ci_debug_printf(1, "Atomic add result : %lu\n", at_c);
 
     ci_thread_mutex_destroy(&CNDMTX);
     ci_thread_cond_destroy(&CND);
