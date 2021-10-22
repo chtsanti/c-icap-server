@@ -70,7 +70,7 @@ static int STAT_TIME_PER_REQUESTS = -1;
 static int STAT_PROC_TIME_PER_REQUESTS = -1;
 
 static struct timestats {
-    time_t indx;
+    uint64_t indx; /*current second as index*/
     uint64_t accumulated_time;
     uint64_t accumulated_proc_time;
     int requests;
@@ -1791,15 +1791,15 @@ int process_request(ci_request_t * req)
     STAT_KBS_INC_NL(STATS, STAT_BODY_BYTES_OUT, req->body_bytes_out);
 
     uint64_t req_processing_time = req->processing_time / 1000;
-    time_t curr_time = ci_clock_time_to_unixtime(&req->stop_w_t);
-    if (curr_time > STAT_TIME.indx) {
+    uint64_t current_second = ci_clock_time_to_seconds(&req->stop_w_t);
+    if (current_second > STAT_TIME.indx) {
         if (STAT_TIME.requests) {
             uint64_t val = STAT_TIME.accumulated_time / STAT_TIME.requests;
             *(ci_stat_uint64_ptr(STAT_TIME_PER_REQUESTS)) = val;
             val = STAT_TIME.accumulated_proc_time / STAT_TIME.requests;
             *(ci_stat_uint64_ptr(STAT_PROC_TIME_PER_REQUESTS)) = val;
         }
-        STAT_TIME.indx = curr_time;
+        STAT_TIME.indx = current_second;
         STAT_TIME.accumulated_time = 0;
         STAT_TIME.accumulated_proc_time = 0;
         STAT_TIME.requests = 0;
@@ -1809,7 +1809,7 @@ int process_request(ci_request_t * req)
                 *(ci_stat_uint64_ptr(srv_xdata->stat_time_per_request)) = srv_xdata->stat_time.accumulated_time / srv_xdata->stat_time.requests;
                 *(ci_stat_uint64_ptr(srv_xdata->stat_proc_time_per_request)) = srv_xdata->stat_time.accumulated_proc_time / srv_xdata->stat_time.requests;
             }
-            srv_xdata->stat_time.indx = curr_time;
+            srv_xdata->stat_time.indx = current_second;
             srv_xdata->stat_time.accumulated_time = 0;
             srv_xdata->stat_time.accumulated_proc_time = 0;
             srv_xdata->stat_time.requests = 0;

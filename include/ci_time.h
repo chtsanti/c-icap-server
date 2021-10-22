@@ -39,7 +39,7 @@ static inline void ci_clock_time_reset(ci_clock_time_t *t)
     *t = CI_CLOCK_TIME_ZERO;
 }
 
-static inline time_t ci_clock_time_to_unixtime(ci_clock_time_t *tm) {
+static inline time_t ci_clock_time_to_seconds(ci_clock_time_t *tm) {
     return tm->tv_sec;
 }
 
@@ -92,6 +92,57 @@ static inline void ci_clock_time_sub(ci_clock_time_t *dst, const ci_clock_time_t
 #else /*_WIN32*/
 
 typedef LARGE_INTEGER ci_clock_time_t;
+
+#define CI_CLOCK_TIME_ZERO (ci_clock_time_t){0}
+
+static inline void ci_clock_time_reset(ci_clock_time_t *t)
+{
+    *t = CI_CLOCK_TIME_ZERO;
+}
+
+static inline uint64_t ci_clock_time_to_seconds(ci_clock_time_t *tm) {
+    LARGE_INTEGER Frequency;
+    QueryPerformanceFrequency(&Frequency);
+    return (tm->QuadPart / Frequency.QuadPart);
+}
+
+static inline int64_t ci_clock_time_diff_milli(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
+    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000000;
+    LARGE_INTEGER Frequency;
+    QueryPerformanceFrequency(&Frequency);
+    return (value / Frequency.QuadPart);
+}
+
+static inline int64_t ci_clock_time_diff_micro(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
+    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000;
+    LARGE_INTEGER Frequency;
+    QueryPerformanceFrequency(&Frequency);
+    return (value / Frequency.QuadPart);
+}
+
+static inline int64_t ci_clock_time_diff_nano(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
+    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000;
+    LARGE_INTEGER Frequency;
+    QueryPerformanceFrequency(&Frequency);
+    return (value / Frequency.QuadPart);
+}
+
+static inline void ci_clock_time_get(ci_clock_time_t *t)
+{
+    QueryPerformanceCounter(t);
+}
+
+static inline void ci_clock_time_add(ci_clock_time_t *dst, const ci_clock_time_t *t1, const ci_clock_time_t *t2) {
+    (*dst).QuadPart = (*t1).QuadPart + (*t2).QuadPart;
+}
+
+static inline void ci_clock_time_add_to(ci_clock_time_t *dst, const ci_clock_time_t *t1) {
+    (*dst).QuadPart += (*t1).QuadPart;
+}
+
+static inline void ci_clock_time_sub(ci_clock_time_t *dst, const ci_clock_time_t *t1, const ci_clock_time_t *t2) {
+    (*dst).QuadPart = (*t1).QuadPart - (*t2).QuadPart;
+}
 
 #endif
 

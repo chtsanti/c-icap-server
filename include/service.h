@@ -116,7 +116,7 @@ typedef struct ci_service_xdata {
     int stat_time_per_request;
     int stat_proc_time_per_request;
     struct timestat {
-        time_t indx;
+        uint64_t indx; /* uses current second as index */
         uint64_t accumulated_time;
         uint64_t accumulated_proc_time;
         int requests;
