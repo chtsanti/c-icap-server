@@ -26,4 +26,10 @@ CXX_PRGS = test_atomics_cplusplus
 test_atomics_cplusplus_SOURCES = test_atomics_cplusplus.cc
 endif
 
-noinst_PROGRAMS = test_cache test_tables test_headers test_allocators test_arrays test_lists test_md5 test_base64 test_body test_ops test_filetype test_shared_locking test_atomics $(CXX_PRGS)
+if IS_WIN32
+OS_ONLY=
+else
+OS_ONLY=test_shared_locking
+endif
+
+noinst_PROGRAMS = test_cache test_tables test_headers test_allocators test_arrays test_lists test_md5 test_base64 test_body test_ops test_filetype test_atomics $(OS_ONLY) $(CXX_PRGS)

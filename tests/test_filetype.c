@@ -47,12 +47,21 @@ void log_errors(void *unused, const char *format, ...)
     va_end(ap);
 }
 
+void vlog_errors(void *unused, const char *format, va_list ap)
+{
+    vfprintf(stderr, format, ap);
+}
+
 int main(int argc, char *argv[])
 {
     char *fname = NULL;
     ci_client_library_init();
 
-    __log_error = (void (*)(void *, const char *, ...)) log_errors;     /*set c-icap library log  function */
+#if ! defined(_WIN32)
+    __log_error = (void (*)(void *, const char *,...)) log_errors;     /*set c-icap library log  function */
+#else
+    __vlog_error = (void (*)(void *, const char *, va_list)) vlog_errors; /* set c-icap library  log function for win32..... */
+#endif
 
     if (!ci_args_apply(argc, argv, options)) {
         ci_args_usage(argv[0], options);
