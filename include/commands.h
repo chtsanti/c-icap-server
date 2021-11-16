@@ -95,7 +95,7 @@ enum {CI_PROC_TERMINATED = 0, CI_PROC_CRASHED};
    The handler will be executed immediately after the master process
    informed, maybe after a new child-process started to replace the killed one.
 */
-CI_DECLARE_FUNC(void) ci_command_register_child_cleanup(const char *name,
+CI_DECL_PROCESS_FUNC(void) ci_command_register_child_cleanup(const char *name,
                                                         void *data,
                                                         void (*child_cleanup_handler) (const char *name, process_pid_t pid, int reason, void *data));
 
