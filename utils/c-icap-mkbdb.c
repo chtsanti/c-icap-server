@@ -13,8 +13,8 @@
 
 DB_ENV *env_db = NULL;
 DB *db = NULL;
-const ci_type_ops_t *key_ops = &ci_str_ops;
-const ci_type_ops_t *val_ops = &ci_str_ops;
+const ci_type_ops_t *key_ops = NULL;
+const ci_type_ops_t *val_ops = NULL;
 
 #define MAXLINE 65535
 
@@ -25,6 +25,7 @@ int ERASE_MODE = 0;
 int VERSION_MODE = 0;
 int USE_DBTREE = 0;
 long int DB_PAGE_SIZE;
+int DEBUG_LEVEL = 1;
 
 ci_mem_allocator_t *allocator = NULL;
 int cfg_set_type(const char *directive, const char **argv, void *setdata);
@@ -33,7 +34,7 @@ static struct ci_options_entry options[] = {
     {"-V", NULL, &VERSION_MODE, ci_cfg_version, "Print version and exits"},
     {"-VV", NULL, &VERSION_MODE, ci_cfg_build_info, "Print version and build informations and exits"},
     {
-        "-d", "debug_level", &CI_DEBUG_LEVEL, ci_cfg_set_int,
+        "-d", "debug_level", &DEBUG_LEVEL, ci_cfg_set_int,
         "The debug level"
     },
     {
@@ -377,7 +378,9 @@ int main(int argc, char **argv)
     void *key, *val;
     int keysize,valsize;
 
-    CI_DEBUG_LEVEL = 1;
+    key_ops = &ci_str_ops;
+    val_ops = &ci_str_ops;
+
     ci_cfg_lib_init();
 
     if (!ci_args_apply(argc, argv, options) || (!txtfile && !DUMP_MODE && !VERSION_MODE)) {
@@ -386,6 +389,8 @@ int main(int argc, char **argv)
     }
     if (VERSION_MODE)
         exit(0);
+
+    CI_DEBUG_LEVEL = DEBUG_LEVEL;
 
 #if ! defined(_WIN32)
     __log_error = (void (*)(void *, const char *,...)) log_errors;     /*set c-icap library log  function */
