@@ -161,7 +161,7 @@ static int set_linger(int sock, int secs_to_linger)
     struct linger linger = { 0 };
     linger.l_onoff = 1;
     linger.l_linger = secs_to_linger;
-    if (setsockopt(sock, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) == -1) {
+    if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&linger, sizeof(linger)) == -1) {
         ci_debug_printf(1, "Unable to set sockopt linger.\n");
         result = 0;
     }
@@ -331,7 +331,7 @@ __LOCAL_UNUSED static void openssl_locking_function(int mode, int n, const char*
  */
 __LOCAL_UNUSED static unsigned long openssl_id_function()
 {
-    return (unsigned long)ci_thread_self;
+    return (unsigned long)ci_thread_current_id();
 }
 /*
  * Cleanup the OpenSSL mutexes
