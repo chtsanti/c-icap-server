@@ -51,6 +51,10 @@ static inline ci_thread_t ci_thread_self() {
     return pthread_self();
 }
 
+static inline unsigned int ci_thread_current_id() {
+    return (unsigned int)pthread_self();
+}
+
 #ifdef USE_PTHREADS_RWLOCK
 
 typedef pthread_rwlock_t ci_thread_rwlock_t;
@@ -181,6 +185,7 @@ CI_DECLARE_FUNC(int) ci_thread_cond_signal(ci_thread_cond_t * pcond);
 CI_DECLARE_FUNC(int) ci_thread_create(ci_thread_t *thread_id, void *(*pfunc)(void *), void *parg);
 CI_DECLARE_FUNC(int) ci_thread_join(ci_thread_t thread_id);
 CI_DECLARE_FUNC(ci_thread_t) ci_thread_self();
+CI_DECLARE_FUNC(unsigned int) ci_thread_current_id();
 
 #endif
 

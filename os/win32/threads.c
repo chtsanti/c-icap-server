@@ -74,6 +74,11 @@ ci_thread_t ci_thread_self()
     return GetCurrentThread();
 }
 
+unsigned int ci_thread_current_id()
+{
+    return (unsigned int)GetCurrentThreadId();
+}
+
 /*Needs some work to implement a better solution here. At Vista there are a number of
 related functions, but for Windows 2000/XP??
 */
