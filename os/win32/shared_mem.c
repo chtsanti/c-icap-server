@@ -29,11 +29,12 @@ void *ci_shared_mem_create(ci_shared_mem_id_t * id, const char *name, int size)
 {
     HANDLE hMapFile;
     LPVOID lpMapAddress;
+#if 0
     SECURITY_ATTRIBUTES saAttr;
-
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
     saAttr.lpSecurityDescriptor = NULL;
+#endif
 
     hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, // current file handle
                                  NULL, // default security
@@ -64,6 +65,7 @@ void *ci_shared_mem_create(ci_shared_mem_id_t * id, const char *name, int size)
     }
 
     strncpy(id->name, name, CI_SHARED_MEM_NAME_SIZE);
+    id->name[CI_SHARED_MEM_NAME_SIZE - 1] = '\0';
     id->size = size;
     id->id = hMapFile;
     id->mem = lpMapAddress;
