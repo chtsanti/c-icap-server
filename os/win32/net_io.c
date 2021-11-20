@@ -29,18 +29,38 @@
 
 int icap_socket_opts(ci_socket fd, int secs_to_linger);
 
+const char * ci_str_network_error(int err, char *buf, size_t buflen)
+{
+    DWORD fmtErr = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                 NULL,
+                                 (DWORD)err,
+                                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                 (LPTSTR)&buf,
+                                 buflen, NULL);
+    return fmtErr ? buf : "<ErrorFormatingError>";
+}
+
+const char * ci_str_last_network_error(char *buf, size_t buflen)
+{
+    DWORD err = WSAGetLastError();
+    return ci_str_network_error(err, buf, buflen);
+}
 
 const char *ci_sockaddr_t_to_host(ci_sockaddr_t * addr, char *hname,
                                   int maxhostlen)
 {
-    /*
-       getnameinfo(&(addr->sockaddr), CI_SOCKADDR_SIZE,hname,maxhostlen-1,NULL,0,0);
-       return (const char *)hname;
-     */
-    return NULL;
+    int ret;
+    ret = getnameinfo((const struct sockaddr *)&(addr->sockaddr),
+                addr->ci_sin_family == AF_INET6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in), hname, maxhostlen - 1,
+                NULL, 0, 0);
+    if (ret == 0)
+        return (const char *) hname;
+
+    char buf[512];
+    ci_debug_printf(5, "Fatal error while retrieving hostname: %s\n", ci_str_last_network_error(buf, sizeof(buf)));
+    snprintf(hname, maxhostlen, "<unknown>");
+    return hname;
 }
-
-
 
 int windows_init()
 {
@@ -61,7 +81,6 @@ int windows_init()
     }
     return 1;
 }
-
 
 ci_socket icap_init_server(ci_port_t *port)
                            //int port, int *protocol_family, int secs_to_linger)
@@ -97,8 +116,6 @@ ci_socket icap_init_server(ci_port_t *port)
     port->protocol_family = AF_INET;
     return port->fd;
 }
-
-
 
 int icap_socket_opts(ci_socket s, int secs_to_linger)
 {
@@ -142,39 +159,6 @@ int ci_connection_set_nonblock(ci_connection_t *conn)
     ioctlsocket(conn->fd, FIONBIO, &nonblock);
     return 1;
 }
-
-/*
-int ci_wait_for_data(ci_socket fd,int secs,int what_wait){
-     fd_set fds,*rfds,*wfds;
-     struct timeval tv;
-     int ret;
-
-     if(secs >= 0){
-      tv.tv_sec=secs;
-      tv.tv_usec=0;
-     }
-
-     FD_ZERO(&fds);
-     FD_SET(fd,&fds);
-
-     if(what_wait == wait_for_read){
-      rfds = &fds;
-      wfds = NULL;
-     }
-     else{
-      wfds = &fds;
-      rfds = NULL;
-     }
-     if((ret = select(fd+1, rfds, wfds, NULL, (secs>=0?&tv:NULL))) > 0)
-      return 1;
-
-     if(ret < 0){
-      ci_debug_printf(1, "Fatal error while waiting for new data....\n");
-     }
-     return 0;
-}
-*/
-
 
 int ci_wait_ms_for_data(ci_socket fd, int msecs, int what_wait)
 {
@@ -227,24 +211,13 @@ int ci_wait_ms_for_data(ci_socket fd, int msecs, int what_wait)
 	if (err == WSAEINTR)
 	    return ci_wait_should_retry;
 	else {
-	    LPTSTR lpStrMsg;
-	    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			  FORMAT_MESSAGE_FROM_SYSTEM |
-			  FORMAT_MESSAGE_IGNORE_INSERTS,
-			  NULL,
-			  err,
-			  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			  (LPTSTR) &lpStrMsg,
-			  0, NULL );
-            ci_debug_printf(5, "Fatal error while waiting for new data %d:%s\n", err, lpStrMsg);
-            LocalFree(lpStrMsg);
+	    char buf[512];
+            ci_debug_printf(5, "Fatal error while waiting for new data %d:%s\n", err, ci_str_network_error((int)err, buf, sizeof(buf)));
             return -1;
 	}
     }
     return 0;
 }
-
-
 
 int ci_read(ci_socket fd, void *buf, size_t count, int timeout)
 {
@@ -255,10 +228,13 @@ int ci_read(ci_socket fd, void *buf, size_t count, int timeout)
     } while (bytes == SOCKET_ERROR && (err = WSAGetLastError()) == WSAEINTR);
 
     if (bytes == SOCKET_ERROR && err == WSAEWOULDBLOCK) {
+        int ret;
+        do {
+            ret = ci_wait_for_data(fd, timeout, wait_for_read);
+        } while (ret & ci_wait_should_retry);
 
-        if (!ci_wait_for_data(fd, timeout, wait_for_read)) {
-            return bytes;
-        }
+        if (ret <= 0)  /*timeout or connection closed*/
+            return -1;
 
         do {
             bytes = recv(fd, buf, count, 0);
@@ -266,14 +242,10 @@ int ci_read(ci_socket fd, void *buf, size_t count, int timeout)
                  && (err = WSAGetLastError()) == WSAEINTR);
     }
     if (bytes == 0) {
-        ci_debug_printf(1,
-                        "What the helll!!!! No data to read, TIMEOUT:%d, errno:%d\n",
-                        timeout, errno);
         return -1;
     }
     return bytes;
 }
-
 
 int ci_write(ci_socket fd, const void *buf, size_t count, int timeout)
 {
@@ -289,10 +261,13 @@ int ci_write(ci_socket fd, const void *buf, size_t count, int timeout)
                  && (err = WSAGetLastError()) == WSAEINTR);
 
         if (bytes == SOCKET_ERROR && err == WSAEWOULDBLOCK) {
+             int ret;
+            do {
+                ret = ci_wait_for_data(fd, timeout, wait_for_write);
+            } while (ret & ci_wait_should_retry);
 
-            if (!ci_wait_for_data(fd, timeout, wait_for_write)) {
-                return bytes;
-            }
+            if (ret <= 0) /*timeout or connection closed*/
+                return -1;
 
             do {
                 bytes = send(fd, b, remains, 0);
@@ -309,7 +284,6 @@ int ci_write(ci_socket fd, const void *buf, size_t count, int timeout)
     return count;
 }
 
-
 int ci_read_nonblock(ci_socket fd, void *buf, size_t count)
 {
     int bytes = 0;
@@ -317,9 +291,16 @@ int ci_read_nonblock(ci_socket fd, void *buf, size_t count)
         bytes = recv(fd, buf, count, 0);
     } while (bytes == SOCKET_ERROR && WSAGetLastError() == WSAEINTR);
 
+    if (bytes < 0 && WSAGetLastError() == WSAEWOULDBLOCK)
+        return 0;
+
+    if (bytes == 0) { /*EOF received?*/
+        ci_debug_printf(4, "Zero bytes read. Is it after wait for data?\n");
+        return -1;
+    }
+
     return bytes;
 }
-
 
 int ci_write_nonblock(ci_socket fd, const void *buf, size_t count)
 {
@@ -327,6 +308,12 @@ int ci_write_nonblock(ci_socket fd, const void *buf, size_t count)
     do {
         bytes = send(fd, buf, count, 0);
     } while (bytes == SOCKET_ERROR && WSAGetLastError() == WSAEINTR);
+
+    if (bytes < 0 && WSAGetLastError() == WSAEWOULDBLOCK)
+        return 0;
+
+    if (bytes == 0) /*connection is closed?*/
+        return -1;
 
     return bytes;
 }
@@ -350,7 +337,6 @@ int ci_linger_close(ci_socket fd, int timeout)
     ci_debug_printf(1, "Connection closed ...\n");
     return 1;
 }
-
 
 int ci_hard_close(ci_socket fd)
 {
@@ -386,7 +372,6 @@ ci_socket_t ci_socket_connect(ci_sockaddr_t *srvaddr, int *errcode)
             s = INVALID_SOCKET;
         }
     }
-
     return s;
 }
 
@@ -396,6 +381,5 @@ int ci_socket_connected_ok(ci_socket_t s)
     int len = sizeof(errcode);
     if (getsockopt(s, SOL_SOCKET, SO_ERROR, (char *)&errcode, &len) != 0)
         errcode = errno;
-
     return errcode;
 }
