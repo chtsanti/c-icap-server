@@ -176,6 +176,12 @@ CI_DECL_PROCESS_FUNC(void *) ci_server_shared_memblob(int ID);
  */
 CI_DECL_PROCESS_FUNC(void *) ci_server_shared_memblob_byname(const char *name);
 
+/**
+ *
+ \returns the number of registerd memblobs
+ \ingroup SERVER_MEMBLOB
+*/
+CI_DECL_PROCESS_FUNC(int) ci_server_shared_memblob_count();
 
 #ifdef __cplusplus
 }

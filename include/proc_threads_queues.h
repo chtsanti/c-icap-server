@@ -36,7 +36,7 @@ extern "C"
 enum KILL_MODE {NO_KILL = 0,GRACEFULLY,IMMEDIATELY};
 
 #ifdef _WIN32
-#define process_pid_t HANDLE
+#define process_pid_t DWORD
 #define ci_pipe_t     HANDLE
 #else
 #define process_pid_t int
@@ -62,6 +62,9 @@ typedef struct child_shared_data {
     int servers;
     _CI_ATOMIC_TYPE int32_t usedservers;
     _CI_ATOMIC_TYPE int64_t requests;
+#if defined(_WIN32)
+    HANDLE pHandle;
+#endif
     process_pid_t pid;
     int idle;
     int to_be_killed;

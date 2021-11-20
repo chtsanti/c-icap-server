@@ -30,11 +30,7 @@
 static ci_dyn_array_t *MemBlobs = NULL;
 static int MemBlobsCount = 0;
 
-#ifdef _WIN32
-#define PID_VALID(pid) (pid != INVALID_HANDLE_VALUE)
-#else
 #define PID_VALID(pid) (pid != 0)
-#endif
 
 static int list_copy_connection(void *dest, const void *src)
 {
@@ -201,7 +197,8 @@ struct childs_queue *create_childs_queue(int size)
 
     for (i = 0; i < q->size; i++) {
 #ifdef _WIN32
-        q->childs[i].pid = INVALID_HANDLE_VALUE;
+        q->childs[i].pid = 0;
+        q->childs[i].pHandle = INVALID_HANDLE_VALUE;
         q->childs[i].pipe = INVALID_HANDLE_VALUE;
 #else
         q->childs[i].pid = 0;
@@ -346,13 +343,10 @@ int remove_child(struct childs_queue *q, process_pid_t pid, int status)
     ci_proc_mutex_lock(&(q->queue_mtx));
     for (i = 0; i < q->size; i++) {
         if (q->childs[i].pid == pid) {
-#ifdef _WIN32
-            q->childs[i].pid = INVALID_HANDLE_VALUE;
-#else
             q->childs[i].pid = 0;
-#endif
             if (q->childs[i].pipe >= 0) {
 #ifdef _WIN32
+                q->childs[i].pHandle = INVALID_HANDLE_VALUE;
                 CloseHandle(q->childs[i].pipe);
                 q->childs[i].pipe = INVALID_HANDLE_VALUE;
 #else
@@ -727,4 +721,9 @@ void ci_server_shared_memblob_shutdown()
 {
     ci_dyn_array_destroy(MemBlobs);
     MemBlobs = NULL;
+}
+
+int ci_server_shared_memblob_count()
+{
+    return MemBlobsCount;
 }

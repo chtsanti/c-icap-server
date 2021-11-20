@@ -29,6 +29,7 @@
 #include "proc_threads_queues.h"
 #include "cfg_param.h"
 #include "port.h"
+#include "server.h"
 #include <tchar.h>
 
 
@@ -40,6 +41,7 @@ typedef struct server_decl {
     ci_request_t *current_req;
     int served_requests;
     int served_requests_no_reallocation;
+    int running;
 } server_decl_t;
 
 
@@ -53,6 +55,7 @@ struct childs_queue *childs_queue = NULL;
 child_shared_data_t *child_data;
 struct connections_queue *con_queue;
 DWORD MY_PROC_PID = 0;
+static ci_stat_memblock_t *STATS = NULL;
 int CHILD_HALT = 0;
 
 /*Interprocess accepting mutex ....*/
@@ -112,11 +115,11 @@ server_decl_t *newthread(struct connections_queue *con_queue)
     server_decl_t *serv;
     serv = (server_decl_t *) malloc(sizeof(server_decl_t));
     serv->srv_id = 0;
-    // serv->srv_pthread = ci_thread_self();
     serv->con_queue = con_queue;
     serv->served_requests = 0;
     serv->served_requests_no_reallocation = 0;
     serv->current_req = NULL;
+    serv->running = 1;
 
     return serv;
 }
@@ -137,14 +140,19 @@ int thread_main(server_decl_t * srv)
     srv->srv_pthread = ci_thread_self();
     for (;;) {
         if (child_data->to_be_killed) {
-            ci_debug_printf(1, "Thread exiting.....\n");
+            ci_debug_printf(3, "Thread exiting.....\n");
+            srv->running = 0;
             return 1;        //Exiting thread.....
         }
 
         if ((ret = get_from_queue(con_queue, &con)) == 0) {
-            wait_for_queue(con_queue);       //It is better that the wait_for_queue to be
-            //moved into the get_from_queue
-            continue;
+            if (child_data->to_be_killed) {
+                srv->running = 0;
+                return 1;
+            }
+            ret = wait_for_queue(con_queue);
+            if (ret >= 0)
+                continue;
         }
 
         if (ret < 0) {        //An error has occured
@@ -152,8 +160,8 @@ int thread_main(server_decl_t * srv)
             break;
         }
 
+        ci_atomic_add_i32(&(child_data->usedservers), 1);
         ci_connection_set_nonblock(&con);
-
         ret = 1;
         if (srv->current_req == NULL)
             srv->current_req = newrequest(&con.conn);
@@ -165,14 +173,11 @@ int thread_main(server_decl_t * srv)
                                   CI_MAXHOSTNAMELEN);
             ci_debug_printf(1, "Request from %s denied...\n", clientname);
             hard_close_connection((&con.conn));
-            continue;        /*The request rejected. Log an error and continue ... */
+            goto end_of_main_loop_thread;
         }
 
-
-        ci_atomic_add_i32(&(child_data->usedservers), 1);
-
         do {
-            if ((request_status = process_request(srv->current_req)) < 0) {
+            if ((request_status = process_request(srv->current_req)) == CI_NO_STATUS) {
                 ci_debug_printf(1,
                                 "Process request timeout or interupted....\n");
                 break;      //
@@ -203,10 +208,10 @@ int thread_main(server_decl_t * srv)
         } while (1);
 
         if (srv->current_req) {
-            if (request_status < 0)
-                hard_close_connection(srv->current_req->connection);
+            if (request_status != CI_OK || child_data->to_be_killed)
+                ci_connection_hard_close(srv->current_req->connection);
             else
-                close_connection(srv->current_req->connection);
+                ci_connection_linger_close(srv->current_req->connection,MAX_SECS_TO_LINGER);
         }
         if (srv->served_requests_no_reallocation >
                 MAX_REQUESTS_BEFORE_REALLOCATE_MEM) {
@@ -217,10 +222,11 @@ int thread_main(server_decl_t * srv)
             srv->served_requests_no_reallocation = 0;
         }
 
+end_of_main_loop_thread:
         ci_atomic_sub_i32(&child_data->usedservers, 1);
         ci_thread_cond_signal(&free_server_cond);
-
     }
+    srv->running = 0;
     return 1;
 }
 
@@ -324,6 +330,9 @@ void child_main(ci_socket sockfd)
     ci_thread_mutex_init(&counters_mtx);
     ci_thread_cond_init(&free_server_cond);
 
+    int ret = ci_stat_attach_mem(child_data->stats, child_data->stats_size, NULL);
+    assert(ret);
+    STATS = ci_stat_memblock_get();
 
     threads_list =
         (server_decl_t **) malloc((CI_CONF.THREADS_PER_CHILD + 1) *
@@ -600,7 +609,7 @@ int do_child()
     }
     ci_debug_printf(1, "Shared memory attached....\n");
     child_data =
-        register_child(childs_queue, child_handle, CI_CONF.THREADS_PER_CHILD,
+        register_child(childs_queue, GetCurrentProcessId(), CI_CONF.THREADS_PER_CHILD,
                        parent_pipe);
     ci_debug_printf(1, "child registered ....\n");
 
@@ -636,38 +645,45 @@ ci_thread_mutex_t control_process_mtx;
 int wait_achild_to_die()
 {
     DWORD i, count, ret;
-    HANDLE died_child, *child_handles =
-        malloc(sizeof(HANDLE) * childs_queue->size);
+    HANDLE child_handles[MAXIMUM_WAIT_OBJECTS];
+    process_pid_t child_pids[MAXIMUM_WAIT_OBJECTS];
     child_shared_data_t *ach;
     while (1) {
         ci_thread_mutex_lock(&control_process_mtx);
-        for (i = 0, count = 0; i < (DWORD) childs_queue->size; i++) {
-            if (childs_queue->childs[i].pid != 0)
-                child_handles[count++] = childs_queue->childs[i].pid;
+        for (i = 0, count = 0; i < (DWORD) childs_queue->size && count < MAXIMUM_WAIT_OBJECTS; i++) {
+            if (childs_queue->childs[i].pHandle != INVALID_HANDLE_VALUE) {
+                child_pids[count] = childs_queue->childs[i].pid;
+                child_handles[count++] = childs_queue->childs[i].pHandle;
+            }
         }
+        ci_thread_mutex_unlock(&control_process_mtx);
         if (count == 0) {
             Sleep(100);
             continue;
         }
-        ci_thread_mutex_unlock(&control_process_mtx);
         ret = WaitForMultipleObjects(count, child_handles, TRUE, INFINITE);
         if (ret == WAIT_TIMEOUT) {
-            ci_debug_printf(1, "What !@#$%^&!!!!! No Timeout exists!!!!!!");
+            ci_debug_printf(1, "Wait failed. Bug: timeout but no timeout is set\n");
             continue;
         }
         if (ret == WAIT_FAILED) {
-            ci_debug_printf(1, "Wait failed. Try again!!!!!!");
+            ci_debug_printf(1, "Wait failed. Try again!!!!!!\n");
+            continue;
+        }
+        if (ret >= WAIT_ABANDONED_0) {
+            ci_debug_printf(1, "Wait failed. Bug: wrong object?\n");
             continue;
         }
         ci_thread_mutex_lock(&control_process_mtx);
-        died_child = child_handles[ret];
+        process_pid_t died_child = child_pids[ret];
+        HANDLE died_child_handle = child_handles[ret];
         ci_debug_printf(1,
                         "Child with handle %d died, lets clean-up the queue\n",
-                        died_child);
+                        (int)died_child);
         ach = get_child_data(childs_queue, died_child);
         CloseHandle(ach->pipe);
         remove_child(childs_queue, died_child, 0);
-        CloseHandle(died_child);
+        CloseHandle(died_child_handle);
         ci_thread_mutex_unlock(&control_process_mtx);
     }
 }
@@ -677,16 +693,17 @@ int wait_achild_to_die()
 int check_for_died_child(DWORD msecs)
 {
     DWORD i, count, ret;
-//     HANDLE died_child,*child_handles = malloc(sizeof(HANDLE)*childs_queue.size);
-    HANDLE died_child, child_handles[MAXIMUM_WAIT_OBJECTS];
+    HANDLE child_handles[MAXIMUM_WAIT_OBJECTS];
+    process_pid_t child_pids[MAXIMUM_WAIT_OBJECTS];
     child_shared_data_t *ach;
-    for (i = 0, count = 0; i < (DWORD) childs_queue->size; i++) {
-        if (childs_queue->childs[i].pid != (HANDLE) 0) {
-            child_handles[count++] = childs_queue->childs[i].pid;
+    ci_thread_mutex_lock(&control_process_mtx);
+    for (i = 0, count = 0; i < (DWORD) childs_queue->size && count < MAXIMUM_WAIT_OBJECTS; i++) {
+        if (childs_queue->childs[i].pHandle != INVALID_HANDLE_VALUE) {
+            child_pids[count] = childs_queue->childs[i].pid;
+            child_handles[count++] = childs_queue->childs[i].pHandle;
         }
-        if (count == MAXIMUM_WAIT_OBJECTS)
-            break;
     }
+    ci_thread_mutex_unlock(&control_process_mtx);
     if (count == 0) {
         ci_debug_printf(1, "Oups no children! waiting for a while.....\n!");
         Sleep(1000);
@@ -694,23 +711,27 @@ int check_for_died_child(DWORD msecs)
     }
     ci_debug_printf(1, "Objects :%d (max:%d)\n", count, MAXIMUM_WAIT_OBJECTS);
     ret = WaitForMultipleObjects(count, child_handles, FALSE, msecs);
-//     ret = WaitForSingleObject(child_handles[0],msecs);
     if (ret == WAIT_TIMEOUT) {
-        ci_debug_printf(1, "Operation timeout, no died child....\n");
+        ci_debug_printf(8, "Operation timeout, no died child....\n");
         return 0;
     }
     if (ret == WAIT_FAILED) {
-        ci_debug_printf(1, "Wait failed. Try again!!!!!!");
+        ci_debug_printf(2, "Wait failed. Try again!!!!!!\n");
         return 0;
     }
 
-    died_child = child_handles[ret];
-    ci_debug_printf(1, "Child with handle %d died, lets clean-up the queue\n",
+    if (ret >= WAIT_ABANDONED_0) {
+        ci_debug_printf(1, "Wait failed. Bug: wrong object?\n");
+        return 0;
+    }
+    process_pid_t died_child = child_pids[ret];
+    HANDLE died_child_handle = child_handles[ret];
+    ci_debug_printf(8, "Child with handle %d died, lets clean-up the queue\n",
                     died_child);
     ach = get_child_data(childs_queue, died_child);
     CloseHandle(ach->pipe);
     remove_child(childs_queue, died_child, 0);
-    CloseHandle(died_child);
+    CloseHandle(died_child_handle);
     return 1;
 }
 
@@ -740,6 +761,9 @@ int start_server()
 
     ci_proc_mutex_init(&accept_mutex);
     ci_thread_mutex_init(&control_process_mtx);
+
+    if (CI_CONF.MAX_SERVERS > MAXIMUM_WAIT_OBJECTS)
+        CI_CONF.MAX_SERVERS = MAXIMUM_WAIT_OBJECTS;
 
     if (!(childs_queue = create_childs_queue(CI_CONF.MAX_SERVERS))) {
         log_server(NULL, "Can't init shared memory.Fatal error, exiting!\n");
@@ -791,17 +815,39 @@ int start_server()
 
 
 #else
+    childs_queue = malloc(sizeof(struct childs_queue));
+    childs_queue->childs = child_data;
+    childs_queue->size = 1;
+    childs_queue->shared_mem_size = 0;
+    childs_queue->stats_block_size = ci_stat_memblock_size();
+    int MemBlobsCount = ci_server_shared_memblob_count();
+    assert(MemBlobsCount >= 0);
+    size_t stats_mem_size =
+        childs_queue->stats_block_size + /*server stats*/
+        childs_queue->stats_block_size + /*History stats*/
+        sizeof(struct server_statistics) + MemBlobsCount * sizeof(ci_server_shared_blob_t);
+    childs_queue->stats_area = malloc(stats_mem_size);
+    childs_queue->stats_history = (childs_queue->stats_area + childs_queue->stats_block_size);
+    ci_stat_memblock_init(childs_queue->stats_history, childs_queue->stats_block_size);
+
+    childs_queue->srv_stats = (childs_queue->stats_area + 2 * childs_queue->stats_block_size);
+    childs_queue->srv_stats->started_childs = 0;
+    childs_queue->srv_stats->closed_childs = 0;
+    childs_queue->srv_stats->crashed_childs = 0;
+    childs_queue->srv_stats->blob_count = MemBlobsCount;
+
     child_data = (child_shared_data_t *) malloc(sizeof(child_shared_data_t));
-    child_data->pid = 0;
+    child_data->pid = GetCurrentProcessId();
+    child_data->pHandle = INVALID_HANDLE_VALUE;
     child_data->servers = CI_CONF.THREADS_PER_CHILD;
     child_data->usedservers = 0;
     child_data->requests = 0;
     child_data->to_be_killed = 0;
     child_data->father_said = 0;
     child_data->idle = 1;
-    child_data->stats_size = ci_stat_memblock_size();
-    child_data->stats = malloc(child_data->stats_size);
-    assert(child_data->stats != NULL);
+    child_data->stats_size = childs_queue->stats_block_size;
+    child_data->stats = childs_queue->stats_area;
+    ci_stat_memblock_init(child_data->stats, child_data->stats_size);
     child_main(LISTEN_SOCKET);
 #endif
 
