@@ -36,6 +36,16 @@
 #include "net_io.h"
 #include "util.h"
 
+const char * ci_str_network_error(int err, char *buf, size_t buflen)
+{
+    return ci_strerror(err, buf, buflen);
+}
+
+const char * ci_str_last_network_error(char *buf, size_t buflen)
+{
+    return ci_strerror(errno, buf, buflen);
+}
+
 const char *ci_sockaddr_t_to_host(ci_sockaddr_t * addr, char *hname,
                                   int maxhostlen)
 {
