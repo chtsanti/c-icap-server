@@ -153,6 +153,34 @@ int icap_socket_opts(ci_socket s, int secs_to_linger)
     return 1;
 }
 
+/*1 is success, 0 should retried, -1 error can be ignored, -2 fatal error */
+int icap_accept_raw_connection(ci_port_t *port, ci_connection_t *conn)
+{
+    socklen_t claddrlen;
+    char errMsg[512];
+    claddrlen = sizeof(conn->claddr.sockaddr);
+    conn->fd = WSAAccept(port->accept_socket, (struct sockaddr *) &(conn->claddr.sockaddr), &claddrlen, NULL,(DWORD_PTR)NULL);
+    if (conn->fd == INVALID_SOCKET) {
+        DWORD err = WSAGetLastError();
+        switch (err) {
+        case WSATRY_AGAIN:
+            return 0;
+        default:
+            ci_debug_printf(2, "Accept failed: %s\n", ci_str_last_network_error(errMsg, sizeof(errMsg)));
+            return -2;
+        }
+    }
+
+    if (!ci_connection_init(conn, ci_connection_server_side)) {
+        ci_debug_printf(1, "Initializing connection failed: %s\n", ci_str_last_network_error(errMsg, sizeof(errMsg)));
+        closesocket(conn->fd);
+        conn->fd = CI_SOCKET_INVALID;
+        return -2;
+    }
+
+    return 1;
+}
+
 int ci_connection_set_nonblock(ci_connection_t *conn)
 {
     u_long nonblock = 1;
