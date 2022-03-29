@@ -36,8 +36,8 @@ extern "C"
 {
 #endif
 
-CI_DECLARE_FUNC(void) ci_http_server_register_service(const char *path, const char *descr, int (*handler)(ci_request_t *req), unsigned);
-CI_DECLARE_FUNC(void) ci_http_server_response_set_status(ci_request_t *req, int status);
+CI_DECL_PROCESS_FUNC(void) ci_http_server_register_service(const char *path, const char *descr, int (*handler)(ci_request_t *req), unsigned);
+CI_DECL_PROCESS_FUNC(void) ci_http_server_response_set_status(ci_request_t *req, int status);
 
 static inline ci_membuf_t *ci_http_server_response_body(ci_request_t *req) {
     _CI_ASSERT(req);
