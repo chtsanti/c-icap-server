@@ -43,6 +43,13 @@ static inline time_t ci_clock_time_to_seconds(ci_clock_time_t *tm) {
     return tm->tv_sec;
 }
 
+static inline void ci_clock_time_to_seconds2(ci_clock_time_t *tm, uint64_t *secs, uint64_t *nsecs) {
+    if (secs)
+        *secs = tm->tv_sec;
+    if (nsecs)
+        *nsecs = tm->tv_nsec;
+}
+
 static inline int64_t ci_clock_time_diff_milli(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
     return
         ((int64_t)tsstop->tv_sec - (int64_t)tsstart->tv_sec) * 1000LL +
@@ -106,22 +113,31 @@ static inline uint64_t ci_clock_time_to_seconds(ci_clock_time_t *tm) {
     return (tm->QuadPart / Frequency.QuadPart);
 }
 
-static inline int64_t ci_clock_time_diff_milli(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
-    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000000;
+static inline void ci_clock_time_to_seconds2(ci_clock_time_t *tm, uint64_t *secs, uint64_t *nsecs) {
+    LARGE_INTEGER Frequency;
+    QueryPerformanceFrequency(&Frequency);
+    if (secs)
+        *secs = tm->QuadPart / Frequency.QuadPart;
+    if (nsecs)
+        *nsecs = ((tm->QuadPart % Frequency.QuadPart) * 1000000000LL) / Frequency.QuadPart;
+}
+
+static inline int64_t ci_clock_time_diff_nano(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
+    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000000LL;
     LARGE_INTEGER Frequency;
     QueryPerformanceFrequency(&Frequency);
     return (value / Frequency.QuadPart);
 }
 
 static inline int64_t ci_clock_time_diff_micro(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
-    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000;
+    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000LL;
     LARGE_INTEGER Frequency;
     QueryPerformanceFrequency(&Frequency);
     return (value / Frequency.QuadPart);
 }
 
-static inline int64_t ci_clock_time_diff_nano(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
-    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000;
+static inline int64_t ci_clock_time_diff_milli(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
+    int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000LL;
     LARGE_INTEGER Frequency;
     QueryPerformanceFrequency(&Frequency);
     return (value / Frequency.QuadPart);
