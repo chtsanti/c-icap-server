@@ -111,7 +111,7 @@ typedef struct authenticator_module {
     struct ci_conf_entry *conf_table;
 } authenticator_module_t;
 
-CI_DECLARE_FUNC(common_module_t *) ci_common_module_build( const char *name, int (*init_module)(struct ci_server_conf *server_conf), int (*post_init_module)(struct ci_server_conf *server_conf), void (*close_module)(), struct ci_conf_entry *conf_table);
+CI_DECL_PROCESS_FUNC(common_module_t *) ci_common_module_build( const char *name, int (*init_module)(struct ci_server_conf *server_conf), int (*post_init_module)(struct ci_server_conf *server_conf), void (*close_module)(), struct ci_conf_entry *conf_table);
 
 static inline common_module_t *ci_common_module_t_dup_to(common_module_t *mod, common_module_t **newmod)
 {
