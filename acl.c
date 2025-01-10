@@ -27,6 +27,7 @@
 #include "access.h"
 #include "mem.h"
 #include "filetype.h"
+#include "util.h"
 #include <ctype.h>
 #include <time.h>
 

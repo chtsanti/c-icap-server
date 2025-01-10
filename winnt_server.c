@@ -407,7 +407,7 @@ void child_main()
     ci_thread_mutex_init(&counters_mtx);
     ci_thread_cond_init(&free_server_cond);
 
-    int ret = ci_stat_attach_mem(child_data->stats, child_data->stats_size, NULL);
+    int ret = ci_stat_attach_mem(child_data->stats, child_data->stats_size, childs_queue->histo_area, childs_queue->histo_size, NULL);
     assert(ret);
     STATS = ci_stat_memblock_get();
 
@@ -901,7 +901,7 @@ void init_commands()
 
 int start_server()
 {
-
+    assert(0 && "Multiple worker processes is not implemented in MS-Windows");
 #ifdef MULTICHILD
     int child_indx, i;
     HANDLE child_handle;
@@ -962,25 +962,31 @@ int start_server()
           ci_debug_printf(1,"The child %d died with status %d\n",pid,status);
          }
     */
+#endif
+    return 1;
+}
 
-
-#else
+int start_single_server()
+{
     childs_queue = malloc(sizeof(struct childs_queue));
     childs_queue->childs = (child_shared_data_t *) malloc(1 * sizeof(child_shared_data_t));
     childs_queue->size = 1;
     childs_queue->shared_mem_size = 0;
     childs_queue->stats_block_size = ci_stat_memblock_size();
+    childs_queue->histo_size = ci_stat_histo_mem_size();
     int MemBlobsCount = ci_server_shared_memblob_count();
     assert(MemBlobsCount >= 0);
     size_t stats_mem_size =
         childs_queue->stats_block_size + /*server stats*/
         childs_queue->stats_block_size + /*History stats*/
+        childs_queue->histo_size + /* histograms */
         sizeof(struct server_statistics) + MemBlobsCount * sizeof(ci_server_shared_blob_t);
     childs_queue->stats_area = malloc(stats_mem_size);
     childs_queue->stats_history = (childs_queue->stats_area + childs_queue->stats_block_size);
     ci_stat_memblock_init(childs_queue->stats_history, childs_queue->stats_block_size);
 
-    childs_queue->srv_stats = (childs_queue->stats_area + 2 * childs_queue->stats_block_size);
+    childs_queue->histo_area = (void *)(childs_queue->stats_area + 2 * childs_queue->stats_block_size);
+    childs_queue->srv_stats = (childs_queue->stats_area + 2 * childs_queue->stats_block_size + childs_queue->histo_size);
     childs_queue->srv_stats->started_childs = 0;
     childs_queue->srv_stats->closed_childs = 0;
     childs_queue->srv_stats->crashed_childs = 0;
@@ -1001,7 +1007,5 @@ int start_server()
     child_data = &(childs_queue->childs[0]);
 
     child_main();
-#endif
-
     return 1;
 }

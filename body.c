@@ -1109,13 +1109,7 @@ ci_simple_file_t *ci_simple_file_existing_new(const char *filename)
     struct stat statBuf;
     if (fstat(fd, &statBuf) < 0) {
         char buf[512];
-#if defined (_MSC_VER)
-        snprintf(buf, sizeof(buf), "%s", strerror(errno));
-#else
-        if (strerror_r(errno, buf, sizeof(buf)) != 0)
-            snprintf(buf, sizeof(buf), "unknown error");
-#endif
-        ci_debug_printf(2, "fstat failed for fd %d file %s: %s\n", fd, filename, buf);
+        ci_debug_printf(2, "fstat failed for fd %d file %s: %s\n", fd, filename, ci_strerror(errno, buf, sizeof(buf)));
         ci_simple_file_destroy(body);
         return NULL;
     }

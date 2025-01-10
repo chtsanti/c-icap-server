@@ -18,7 +18,7 @@ SUBDIRS =  . utils modules services tests docs
 
 
 lib_LTLIBRARIES=libicapapi.la
-if ISCYGWIN
+if IS_WINDOWS_BUILD
 lib_LTLIBRARIES += libcicap.la
 endif
 
