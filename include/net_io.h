@@ -47,6 +47,7 @@ extern "C"
 #define CI_SOCKET_INVALID -1
 #define ci_socket_valid(fd) (fd >= 0)
 #else
+int ci_windows_network_init();
 #define ci_socket SOCKET
 #define CI_SOCKET_INVALID INVALID_SOCKET
 #define ci_socket_valid(fd) (fd != INVALID_SOCKET)

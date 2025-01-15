@@ -62,7 +62,7 @@ const char *ci_sockaddr_t_to_host(ci_sockaddr_t * addr, char *hname,
     return hname;
 }
 
-int windows_init()
+int ci_windows_network_init()
 {
     WORD wVersionRequested;
     WSADATA wsaData;
@@ -87,10 +87,6 @@ ci_socket icap_init_server(ci_port_t *port)
 {
     int er;
     struct sockaddr_in addr;
-
-    if (!windows_init()) {
-        ci_debug_printf(1, "Error initialize windows sockets...\n");
-    }
 
     port->fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (port->fd == INVALID_SOCKET) {

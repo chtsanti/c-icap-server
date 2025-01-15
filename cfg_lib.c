@@ -23,6 +23,7 @@
 #include "cfg_param.h"
 #include "mem.h"
 #include "debug.h"
+#include "net_io.h"
 #include <util.h>
 #include <ctype.h>
 #if defined(HAVE_GNU_LIBC_VERSION_H)
@@ -58,6 +59,17 @@ void *ci_cfg_alloc_mem(int size)
 
 const char *ci_lib_version_string() {
     return VERSION;
+}
+
+#if defined(_WIN32)
+void ci_windows_util_init();
+#endif
+void ci_lib_init()
+{
+#if defined(_WIN32)
+    ci_windows_network_init();
+    ci_windows_util_init();
+#endif
 }
 
 /*ci_conf_table functions*/

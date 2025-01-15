@@ -19,13 +19,44 @@
 
 #include "common.h"
 #include "c-icap.h"
+#include "util.h"
+#include "ci_time.h"
+
 #include <time.h>
 #include <assert.h>
 #include <io.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include "util.h"
+#include "ci_time.h"
 
+LARGE_INTEGER _CI_CLOCK_FREQUENCY = {.QuadPart = 1};
+struct _ci_TimeVal{
+    uint64_t secs;
+    uint64_t nsecs;
+} _CI_CLOCK_EPOCH_BASE = {0, 0};
+static LARGE_INTEGER _CI_PERFORMANCE_COUNTER_START = {.QuadPart = 0};
+
+void ci_windows_util_init()
+{
+    QueryPerformanceFrequency(&_CI_CLOCK_FREQUENCY);
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    QueryPerformanceCounter(&_CI_PERFORMANCE_COUNTER_START);
+    const uint64_t time100ns = (uint64_t)ft.dwLowDateTime + ((uint64_t)(ft.dwHighDateTime) << 32LL);
+    const uint64_t epoch100ns = time100ns - 116444736000000000LL;
+    _CI_CLOCK_EPOCH_BASE.secs = epoch100ns / 10000000;
+    _CI_CLOCK_EPOCH_BASE.nsecs = (epoch100ns % 10000000) * 100;
+}
+
+void ci_performance_counter_to_epoch(LARGE_INTEGER *tm, uint64_t *secs, uint64_t *nsecs)
+{
+    assert(secs && nsecs);
+    uint64_t counter_from_start = tm->QuadPart - _CI_PERFORMANCE_COUNTER_START.QuadPart;
+    *secs = counter_from_start / _CI_CLOCK_FREQUENCY.QuadPart;
+    uint64_t nsi = ((counter_from_start % _CI_CLOCK_FREQUENCY.QuadPart) * 1000000000LL) / _CI_CLOCK_FREQUENCY.QuadPart + _CI_CLOCK_EPOCH_BASE.nsecs;
+    *nsecs = nsi % 1000000000LL;
+    *secs += _CI_CLOCK_EPOCH_BASE.secs + nsi / 1000000000LL;
+}
 
 int strncasecmp(const char *s1, const char *s2, size_t n)
 {

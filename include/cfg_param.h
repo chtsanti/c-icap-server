@@ -165,6 +165,10 @@ CI_DECLARE_FUNC(void)   ci_cfg_lib_destroy();
 CI_DECLARE_FUNC(void *) ci_cfg_alloc_mem(int size);
 CI_DECLARE_FUNC(const char *) ci_lib_version_string();
 
+/*TODO: call from this function all of the required initialization
+functions (like ci_cfg_lib_init()) and maybe move to a different file*/
+CI_DECLARE_FUNC(void)   ci_lib_init();
+
 /**
  * Sets a string configuration parameter. The setdata are a pointer to a
  * string pointer

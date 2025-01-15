@@ -167,6 +167,7 @@ int main(int argc, char **argv)
 
     assert(strcmp(ci_lib_version_string(), VERSION) == 0);
 
+    ci_lib_init();
     ci_mem_init();
     ci_atomics_init();
     init_internal_lookup_tables();

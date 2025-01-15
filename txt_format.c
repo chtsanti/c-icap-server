@@ -741,19 +741,21 @@ int fmt_req_start_time(ci_request_t *req, char *buf,int len, const char *param)
     char prec = 's';
     if (param && param[0])
         prec = param[0];
+    uint64_t secs, nsec;
+    ci_clock_time_to_epoch(&req->start_r_t, &secs, &nsec);
     switch(prec) {
     case 's':
     case 'S':
-        return  snprintf(buf, len, "%" PRIi64, req->start_r_t.tv_sec);
+        return  snprintf(buf, len, "%" PRIi64, secs);
     case 'm':
     case 'M':
-        return  snprintf(buf, len, "%" PRIi64 ".%" PRIi64, req->start_r_t.tv_sec, convert_nanosec(req->start_r_t.tv_nsec, 'm'));
+        return  snprintf(buf, len, "%" PRIi64 ".%" PRIi64, secs, convert_nanosec(nsec, 'm'));
     case 'u':
     case 'U':
-        return  snprintf(buf, len, "%" PRIi64 ".%" PRIi64, req->start_r_t.tv_sec, convert_nanosec(req->start_r_t.tv_nsec, 'u'));
+        return  snprintf(buf, len, "%" PRIi64 ".%" PRIi64, secs, convert_nanosec(nsec, 'u'));
     case 'n':
     case 'N':
-        return  snprintf(buf, len, "%" PRIi64 ".%" PRIi64, req->start_r_t.tv_sec, req->start_r_t.tv_nsec);
+        return  snprintf(buf, len, "%" PRIi64 ".%" PRIi64, secs, nsec);
     default:
         return -1;
     }

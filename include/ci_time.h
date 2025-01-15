@@ -50,6 +50,10 @@ static inline void ci_clock_time_to_seconds2(ci_clock_time_t *tm, uint64_t *secs
         *nsecs = tm->tv_nsec;
 }
 
+static inline void ci_clock_time_to_epoch(ci_clock_time_t *tm, uint64_t *secs, uint64_t *nsecs) {
+    ci_clock_time_to_seconds2(tm, secs, nsecs);
+}
+
 static inline int64_t ci_clock_time_diff_milli(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
     return
         ((int64_t)tsstop->tv_sec - (int64_t)tsstart->tv_sec) * 1000LL +
@@ -99,8 +103,10 @@ static inline void ci_clock_time_sub(ci_clock_time_t *dst, const ci_clock_time_t
 #else /*_WIN32*/
 
 typedef LARGE_INTEGER ci_clock_time_t;
-
 #define CI_CLOCK_TIME_ZERO (ci_clock_time_t){0}
+
+CI_DECLARE_DATA extern LARGE_INTEGER _CI_CLOCK_FREQUENCY;
+CI_DECLARE_FUNC(void) ci_performance_counter_to_epoch(LARGE_INTEGER *tm, uint64_t *secs, uint64_t *nsecs);
 
 static inline void ci_clock_time_reset(ci_clock_time_t *t)
 {
@@ -108,39 +114,33 @@ static inline void ci_clock_time_reset(ci_clock_time_t *t)
 }
 
 static inline uint64_t ci_clock_time_to_seconds(ci_clock_time_t *tm) {
-    LARGE_INTEGER Frequency;
-    QueryPerformanceFrequency(&Frequency);
-    return (tm->QuadPart / Frequency.QuadPart);
+    return (tm->QuadPart / _CI_CLOCK_FREQUENCY.QuadPart);
 }
 
 static inline void ci_clock_time_to_seconds2(ci_clock_time_t *tm, uint64_t *secs, uint64_t *nsecs) {
-    LARGE_INTEGER Frequency;
-    QueryPerformanceFrequency(&Frequency);
     if (secs)
-        *secs = tm->QuadPart / Frequency.QuadPart;
+        *secs = tm->QuadPart / _CI_CLOCK_FREQUENCY.QuadPart;
     if (nsecs)
-        *nsecs = ((tm->QuadPart % Frequency.QuadPart) * 1000000000LL) / Frequency.QuadPart;
+        *nsecs = ((tm->QuadPart % _CI_CLOCK_FREQUENCY.QuadPart) * 1000000000LL) / _CI_CLOCK_FREQUENCY.QuadPart;
+}
+
+static inline void ci_clock_time_to_epoch(ci_clock_time_t *tm, uint64_t *secs, uint64_t *nsecs) {
+    ci_performance_counter_to_epoch(tm, secs, nsecs);
 }
 
 static inline int64_t ci_clock_time_diff_nano(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
     int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000000LL;
-    LARGE_INTEGER Frequency;
-    QueryPerformanceFrequency(&Frequency);
-    return (value / Frequency.QuadPart);
+    return (value / _CI_CLOCK_FREQUENCY.QuadPart);
 }
 
 static inline int64_t ci_clock_time_diff_micro(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
     int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000000LL;
-    LARGE_INTEGER Frequency;
-    QueryPerformanceFrequency(&Frequency);
-    return (value / Frequency.QuadPart);
+    return (value / _CI_CLOCK_FREQUENCY.QuadPart);
 }
 
 static inline int64_t ci_clock_time_diff_milli(ci_clock_time_t *tsstop, ci_clock_time_t *tsstart) {
     int64_t value = (tsstop->QuadPart - tsstart->QuadPart) * 1000LL;
-    LARGE_INTEGER Frequency;
-    QueryPerformanceFrequency(&Frequency);
-    return (value / Frequency.QuadPart);
+    return (value / _CI_CLOCK_FREQUENCY.QuadPart);
 }
 
 static inline void ci_clock_time_get(ci_clock_time_t *t)
