@@ -832,13 +832,6 @@ int init_server()
         return 0;
     }
 
-#ifdef USE_OPENSSL
-    if (CI_CONF.TLS_ENABLED) {
-        ci_tls_init();
-        ci_tls_set_passphrase_script(CI_CONF.TLS_PASSPHRASE);
-    }
-#endif
-
     for (i = 0; (p = (ci_port_t *)ci_vector_get(CI_CONF.PORTS, i)); ++i) {
         if (p->configured)
             continue;
