@@ -191,6 +191,8 @@ void _BUILD_KID(int id, _PINFO *pi, int argc, char *argv[])
 void _WAIT_KID(_PINFO *pi)
 {
 #if defined(_WIN32)
+    if (!pi->hProcess)
+        return; /*nothing to wait for*/
     WaitForSingleObject(pi->hProcess, INFINITE );
     CloseHandle(pi->hProcess );
     CloseHandle(pi->hThread );
@@ -204,7 +206,7 @@ void _WAIT_KID(_PINFO *pi)
         ci_proc_mutex_recover_after_crash();
     } else {
         ci_debug_printf(4, "Child %d terminated with status %d\n", pid, status);
-../    }
+    }
 #endif
 }
 
@@ -253,8 +255,7 @@ int main(int argc, char *argv[])
     }
 
     for(i = 0; i < PROCS; i++) {
-        if (processes[i].hProcess != NULL)
-            _WAIT_KID(&processes[i]);
+        _WAIT_KID(&processes[i]);
     }
 
     ci_proc_mutex_destroy(&stats_mutex);
