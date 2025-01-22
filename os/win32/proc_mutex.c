@@ -26,7 +26,7 @@
 
 int ci_proc_mutex_init(ci_proc_mutex_t * mutex, const char *name)
 {
-    snprintf(mutex->name, CI_PROC_MUTEX_NAME_SIZE, "Local\%s", name);
+    snprintf(mutex->name, CI_PROC_MUTEX_NAME_SIZE, "Local\\c_icap_%s", name);
     /*TODO: use named mutex*/
     if ((mutex->data = (void *)CreateMutex(NULL, FALSE, NULL)) == NULL) {
         ci_debug_printf(1, "Error creating mutex:%d\n", GetLastError());
@@ -60,7 +60,7 @@ void ci_proc_mutex_recover_after_crash()
 
 int ci_proc_mutex_print_info(ci_proc_mutex_t * mutex, char *buf, size_t buf_size)
 {
-    return snprintf(buf, buf_size, " - ");
+    return snprintf(buf, buf_size, "%s", mutex->name);
 }
 
 static ci_proc_mutex_scheme_t win32_mutex_scheme = {
@@ -69,7 +69,7 @@ static ci_proc_mutex_scheme_t win32_mutex_scheme = {
     ci_proc_mutex_lock,
     ci_proc_mutex_unlock,
     ci_proc_mutex_print_info,
-    "posix"
+    "win32"
 };
 
 const ci_proc_mutex_scheme_t *ci_proc_mutex_default_scheme()
