@@ -35,13 +35,13 @@ void *ci_shared_mem_create(ci_shared_mem_id_t * id, const char *name, int size)
     saAttr.bInheritHandle = TRUE;
     saAttr.lpSecurityDescriptor = NULL;
 #endif
-
+    snprintf(id->name, sizeof(id->name), "Local\\c_icap_%s", name);
     hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, // current file handle
                                  NULL, // default security
                                  PAGE_READWRITE,       // read/write permission
                                  0,    // First 32 bit of size (Not used)
                                  size, // Second 32 bit of size
-                                 NULL);        // name of mapping object
+                                 id->name);// name of mapping object
 
     if (hMapFile == NULL) {
         ci_debug_printf(1,
@@ -64,8 +64,6 @@ void *ci_shared_mem_create(ci_shared_mem_id_t * id, const char *name, int size)
         return NULL;
     }
 
-    strncpy(id->name, name, CI_SHARED_MEM_NAME_SIZE);
-    id->name[CI_SHARED_MEM_NAME_SIZE - 1] = '\0';
     id->size = size;
     id->id = hMapFile;
     id->mem = lpMapAddress;
@@ -75,6 +73,11 @@ void *ci_shared_mem_create(ci_shared_mem_id_t * id, const char *name, int size)
 
 void *ci_shared_mem_attach(ci_shared_mem_id_t * id)
 {
+    // The process should always call ci_shared_mem_create.
+    // This function is NOP for MS-Windows.
+    return id->mem;
+
+#if 0
     LPVOID lpMapAddress;
     lpMapAddress = MapViewOfFile(id->id,  // handle to mapping object
                                  FILE_MAP_ALL_ACCESS,  // read/write permission
@@ -91,6 +94,7 @@ void *ci_shared_mem_attach(ci_shared_mem_id_t * id)
 
     id->mem = lpMapAddress;
     return lpMapAddress;
+#endif
 }
 
 int ci_shared_mem_detach(ci_shared_mem_id_t * id)
